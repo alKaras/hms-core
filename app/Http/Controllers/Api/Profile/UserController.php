@@ -11,12 +11,13 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-        $roles = $user->roles()->pluck('title')->toArray();
+//        $roles = $user->roles()->pluck('title')->first();
+        $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
 
         return response()->json([
             'user' => [
                 'data' => $user,
-                'roles' => $roles,
+                'roles' => $highestPriorityRole,
             ]
         ]);
     }
