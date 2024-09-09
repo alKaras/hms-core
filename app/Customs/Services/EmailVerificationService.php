@@ -152,7 +152,7 @@ class EmailVerificationService
         }
         $token = Str::uuid();
 
-        $url = config('app.url') . "?token=" . $token . "&email=" . $email;
+        $url = config('app.url') . "/verification?token=" . $token . "&email=" . $email;
         $saveToken = EmailVerificationToken::create([
             "user_id" => $user->id,
             'token' => $token,

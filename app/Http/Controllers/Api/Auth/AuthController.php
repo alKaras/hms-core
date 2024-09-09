@@ -104,6 +104,17 @@ class AuthController extends Controller
     }
 
     /**
+     * Show Email verification page
+     */
+    public function showVerificationPage(Request $request)
+    {
+        $token = $request->query('token');
+        $email = $request->query('email');
+
+        return view('verification', compact('token', 'email'));
+    }
+
+    /**
      * Verify User Email
      */
     public function verifyUserEmail(Request $request)
