@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profile\PasswordController;
+use App\Http\Controllers\HospitalController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,3 +23,10 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__ . '/auth.php';
 
+Route::prefix('hospital')->group(function () {
+    Route::get('fetch', [HospitalController::class, 'index']);
+    Route::get('fetch/{hospital}', [HospitalController::class, 'show']);
+    Route::post('create', [HospitalController::class, 'store']);
+    Route::put('edit/{id}', [HospitalController::class, 'update']);
+    Route::delete('delete/{id}', [HospitalController::class, 'destroy']);
+});
