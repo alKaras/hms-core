@@ -11,7 +11,7 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-//        $roles = $user->roles()->pluck('title')->first();
+        //        $roles = $user->roles()->pluck('title')->first();
         $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
 
         return response()->json([
