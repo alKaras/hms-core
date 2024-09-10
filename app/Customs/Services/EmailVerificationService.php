@@ -30,16 +30,15 @@ class EmailVerificationService
         if ($user) {
             $this->sendVerificationLink($user);
 
-             response()->json([
+             return response()->json([
                'status' => 'success',
                'message' => 'verification link sent successfully',
-            ])->send();
+            ]);
         } else {
-            response()->json([
+            return response()->json([
                 'status' => 'failed',
                 'message' => "User not found"
-            ], 404)->send();
-            exit;
+            ], 404);
         }
     }
 
@@ -86,11 +85,10 @@ class EmailVerificationService
     {
         $user = User::where('email', $email)->first();
         if (!$user) {
-            response()->json([
+            return response()->json([
                 'status' => 'failed',
                 'message' => "User not found"
-            ], 404)->send();
-            exit;
+            ], 404);
         }
         $this->checkIfEmailVerified($user);
 
@@ -122,11 +120,10 @@ class EmailVerificationService
     protected function checkIfEmailVerified($user)
     {
         if ($user->email_verified_at) {
-            response()->json([
+            return response()->json([
                 'status' => 'failed',
                 'message' => 'Email has already been verified'
-            ], 400)->send();
-            exit;
+            ], 400);
         }
     }
 

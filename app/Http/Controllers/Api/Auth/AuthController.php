@@ -130,7 +130,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $this->emailVerificationService->verifyEmail($request->email, $request->token);
+        return $this->emailVerificationService->verifyEmail($request->email, $request->token);
 
     }
 
@@ -149,7 +149,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $this->emailVerificationService->resendLink($request->email);
+        return $this->emailVerificationService->resendLink($request->email);
     }
 
     /**
