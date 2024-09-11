@@ -15,7 +15,9 @@ use Illuminate\Validation\Rules\Password;
 class AuthController extends Controller
 {
 
-    public function __construct(private EmailVerificationService $emailVerificationService){}
+    public function __construct(private EmailVerificationService $emailVerificationService)
+    {
+    }
 
     /**
      * Login method
@@ -33,14 +35,14 @@ class AuthController extends Controller
             ]
         ]);
 
-        if ($validator->fails()){
+        if ($validator->fails()) {
             return response()->json([
                 'message' => $validator->errors()
             ], 422);
         }
 
         $token = auth()->attempt(['email' => $request->email, 'password' => $request->password]);
-        if ($token){
+        if ($token) {
             return $this->responseWithToken($token, auth()->user());
         }
         return response()->json([
@@ -69,7 +71,7 @@ class AuthController extends Controller
             ]
         ]);
 
-        if ($validator->fails()){
+        if ($validator->fails()) {
             return response()->json([
                 'message' => $validator->errors()
             ], 422);
@@ -85,7 +87,7 @@ class AuthController extends Controller
 
         $roleId = Role::where('title', 'user')->value('id');
 
-        if ($user){
+        if ($user) {
             DB::table('user_roles')->insert([
                 'user_id' => $user->id,
                 'role_id' => $roleId,
@@ -124,7 +126,7 @@ class AuthController extends Controller
             'token' => ['required', 'string', 'max:255']
         ]);
 
-        if ($validator->fails()){
+        if ($validator->fails()) {
             return response()->json([
                 'message' => $validator->errors()
             ], 422);
@@ -143,7 +145,7 @@ class AuthController extends Controller
             'email' => ['required', 'email']
         ]);
 
-        if ($validator->fails()){
+        if ($validator->fails()) {
             return response()->json([
                 'message' => $validator->errors()
             ], 422);
@@ -168,7 +170,8 @@ class AuthController extends Controller
     /**
      * Return JWT access token
      */
-    protected function responseWithToken($token, $user){
+    protected function responseWithToken($token, $user)
+    {
         return response()->json([
             'status' => 'success',
             'user' => $user,
