@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Hospital;
 use DB;
+use App\Models\Hospital;
 use Illuminate\Http\Request;
 use App\Http\Resources\HospitalResource;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 class HospitalController extends Controller
 {
@@ -69,7 +69,7 @@ class HospitalController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified hospital.
      */
     public function show($id)
     {
