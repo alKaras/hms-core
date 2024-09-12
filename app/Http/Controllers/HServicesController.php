@@ -4,12 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ServicesResource;
 use App\Imports\ServicesImport;
-use App\Models\Department;
 use App\Models\Doctor;
 use App\Models\Hospital;
 use App\Models\HServices;
 use Illuminate\Http\Request;
-use App\Http\Resources\HospitalResource;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -21,7 +19,22 @@ class HServicesController extends Controller
     public function index()
     {
         $services = HServices::all();
-        return HospitalResource::collection($services);
+        return ServicesResource::collection($services);
+    }
+
+    /**
+     * Display one service
+     */
+    public function show($id)
+    {
+        $services = HServices::find($id);
+        if (!$services) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => "No provided services for given id #$id"
+            ]);
+        }
+        return new ServicesResource($services);
     }
 
     /**
@@ -75,7 +88,9 @@ class HServicesController extends Controller
     }
 
     /**
-     * Import services from XLSX file
+     * Import services using xlsx file handler
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function import(Request $request)
     {
@@ -122,8 +137,24 @@ class HServicesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(HServices $hServices)
+    public function destroy($id)
     {
-        //
+        $service = HServices::find($id);
+        if (!$service) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => "Can\'t find any services by provided id #$id",
+            ]);
+        }
+
+        $service->doctors()->detach();
+        $service->hospitals()->detach();
+        $service->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Service and connected entities deleted successfully',
+        ]);
+
     }
 }

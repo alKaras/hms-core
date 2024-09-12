@@ -18,17 +18,25 @@ class ServicesResource extends JsonResource
             "id" => $this->id,
             "name" => $this->name,
             "description" => $this->description,
-            "doctors" => [
-                'id' => $this->doctors->id,
-                'name' => $this->doctors->name,
-            ],
-            'hospitals' => [
-                'id' => $this->hospitals->id,
-                'title' => $this->hospitals->pluck('content.title'),
-            ],
+            "doctors" => $this->doctors
+                ->filter(function ($doctor) {
+                    return $doctor->hidden === 0; })
+                ->map(function ($doctor) {
+                    return [
+                        'id' => $doctor->id,
+                        'name' => $doctor->user->name,
+                        'surname' => $doctor->user->surname,
+                    ];
+                }),
+            'hospitals' => $this->hospitals->map(function ($hospital) {
+                return [
+                    'id' => $hospital->id,
+                    'title' => $hospital->content->title,
+                ];
+            }),
             'department' => [
                 'id' => $this->department->id,
-                'title' => $this->department->pluck('content.title'),
+                'title' => $this->department->content->title,
             ]
         ];
     }

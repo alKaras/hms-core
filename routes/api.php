@@ -46,4 +46,7 @@ Route::prefix('user')->group(function () {
 Route::prefix('services')->group(function () {
     Route::post('/create', [HServicesController::class, 'store']);
     Route::post('/import', [HServicesController::class, 'import']);
+    Route::get('/fetch', [HServicesController::class, 'index']);
+    Route::get('/fetch/{id}', [HServicesController::class, 'show']);
+    Route::delete('/delete/{id}', [HServicesController::class, 'destroy']);
 });
