@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HospitalController;
+use App\Http\Controllers\HServicesController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profile\UserController;
 use App\Http\Controllers\Api\Profile\PasswordController;
@@ -40,4 +41,9 @@ Route::prefix('user')->group(function () {
     Route::post('attach-role/{id}', [UserController::class, 'attachRole']);
     Route::post('detach-role/{id}', [UserController::class, 'detachRole']);
     Route::delete('delete/{id}', [UserController::class, 'destroy']);
+});
+
+Route::prefix('services')->group(function () {
+    Route::post('/create', [HServicesController::class, 'store']);
+    Route::post('/import', [HServicesController::class, 'import']);
 });

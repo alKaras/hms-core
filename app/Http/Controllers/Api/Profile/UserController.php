@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\userResource;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
@@ -41,7 +41,7 @@ class UserController extends Controller
     {
         $users = User::all();
 
-        return userResource::collection($users);
+        return UserResource::collection($users);
     }
 
     /**
@@ -88,7 +88,7 @@ class UserController extends Controller
                 'updated_at' => now(),
             ]);
 
-            return new userResource($user);
+            return new UserResource($user);
         }
         return response()->json([
             'status' => 'failed',
@@ -113,7 +113,7 @@ class UserController extends Controller
             ], 404);
         }
 
-        return new userResource($user);
+        return new UserResource($user);
     }
 
     /**
@@ -158,7 +158,7 @@ class UserController extends Controller
             'password' => bcrypt($request->password) ?? $user->password
         ]);
 
-        return new userResource($user);
+        return new UserResource($user);
     }
 
 

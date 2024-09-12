@@ -25,4 +25,9 @@ class Hospital extends Model
     {
         return $this->belongsToMany(Department::class, 'hospital_departments', 'hospital_id', 'department_id');
     }
+
+    public function services()
+    {
+        return $this->belongsToMany(HServices::class, 'hospital_services', 'hospital_id', 'service_id');
+    }
 }

@@ -15,13 +15,9 @@ return new class extends Migration {
             $table->string('name');
             $table->string('description')->nullable();
             $table->tinyInteger('is_public')->default(1);
-            $table->unsignedBigInteger('doctor_id');
-            $table->unsignedBigInteger('hospital_id');
             $table->unsignedBigInteger('department_id');
             $table->timestamps();
 
-            $table->foreign('doctor_id')->references('id')->on('doctors');
-            $table->foreign('hospital_id')->references('id')->on('hospital');
             $table->foreign('department_id')->references('id')->on('department');
         });
     }
