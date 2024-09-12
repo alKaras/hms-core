@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Department\Department;
+use App\Models\Doctor\Doctor;
+use App\Models\Hospital\Hospital;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 

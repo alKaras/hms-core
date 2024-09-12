@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Models\Hospital;
+use App\Models\Hospital\Hospital;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\HospitalContent>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Hospital\HospitalContent>
  */
 class HospitalContentFactory extends Factory
 {

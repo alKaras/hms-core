@@ -1,7 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Doctor;
 
+use App\Models\Department\Department;
+use App\Models\HServices;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 

@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Hospital;
+use App\Models\Hospital\Hospital;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class HospitalSeeder extends Seeder
 {

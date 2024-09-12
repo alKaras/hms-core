@@ -2,11 +2,11 @@
 
 namespace App\Imports;
 
-use App\Models\Doctor;
-use App\Models\User;
-use App\Models\Hospital;
+use App\Models\Department\Department;
+use App\Models\Doctor\Doctor;
+use App\Models\Hospital\Hospital;
 use App\Models\HServices;
-use App\Models\Department;
+use App\Models\User;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 

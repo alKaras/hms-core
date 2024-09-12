@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use DB;
-use App\Models\Hospital;
-use Illuminate\Http\Request;
 use App\Http\Resources\HospitalResource;
+use App\Models\Hospital\Hospital;
+use DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class HospitalController extends Controller

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ServicesResource;
 use App\Imports\ServicesImport;
-use App\Models\Doctor;
-use App\Models\Hospital;
+use App\Models\Doctor\Doctor;
+use App\Models\Hospital\Hospital;
 use App\Models\HServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
