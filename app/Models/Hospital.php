@@ -20,4 +20,9 @@ class Hospital extends Model
     {
         return $this->hasOne(HospitalContent::class);
     }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'hospital_departments', 'hospital_id', 'department_id');
+    }
 }
