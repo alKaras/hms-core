@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ServicesResource;
 use App\Imports\ServicesImport;
+use App\Models\Department;
 use App\Models\Doctor;
 use App\Models\Hospital;
 use App\Models\HServices;
@@ -31,9 +32,9 @@ class HServicesController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['string', 'required', 'max:255'],
             'description' => ['string', 'max:255'],
-            'department_id' => ['required', 'exists:departments,id'],
+            'department_id' => ['required', 'exists:department,id'],
             'hospital_id' => ['required', 'exists:hospital,id'],
-            'doctor_id' => ['required|exists:doctors,id']
+            'doctor_id' => ['required', 'exists:doctors,id']
         ]);
 
         if ($validator->fails()) {
@@ -59,10 +60,11 @@ class HServicesController extends Controller
                 'updated_at' => now(),
             ]);
 
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Service created successfully',
-                'service' => new ServicesResource($service)
+                'service' => $service
             ], 201);
         } else {
             return response()->json([
@@ -86,9 +88,21 @@ class HServicesController extends Controller
         }
 
         $file = $request->file('file');
-        $path = $file->store('imports');
+        $originalFileName = $file->getClientOriginalName();
+        $file->storeAs('imports', $originalFileName);
 
-        Excel::import(new ServicesImport, storage_path('app/' . $path));
+        try {
+            Excel::import(new ServicesImport, $file);
+        } catch (\Exception $e) {
+            \Log::error('Import failed', ['exception' => $e]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to import services.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+
 
         return response()->json([
             'status' => 'success',

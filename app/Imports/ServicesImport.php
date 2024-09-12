@@ -33,7 +33,7 @@ class ServicesImport implements ToModel, WithHeadingRow
 
         $doctor = Doctor::where('user_id', $user->id)->first();
 
-        if (!$department || $hospital || $doctor) {
+        if (!$department || !$hospital || !$doctor) {
             return null;
         }
 

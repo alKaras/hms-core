@@ -15,6 +15,7 @@ class HServices extends Model
         'name',
         'description',
         'is_public',
+        'department_id',
     ];
 
     public function department()
