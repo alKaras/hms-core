@@ -136,7 +136,7 @@ class DoctorController extends Controller
             \Log::error('Import failed', ['exception' => $e]);
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to import services.',
+                'message' => 'Failed to import doctors.',
                 'error' => $e->getMessage()
             ], 500);
         }

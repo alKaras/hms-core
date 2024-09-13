@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\HServicesController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profile\UserController;
 use App\Http\Controllers\Api\Profile\PasswordController;
@@ -59,4 +60,13 @@ Route::prefix('doctors')->group(function () {
     Route::post('/edit/{id}', [DoctorController::class, 'update']);
     Route::post('/import', [DoctorController::class, 'importDoctors']);
     Route::delete('/delete/{id}', [DoctorController::class, 'destroy']);
+});
+
+Route::prefix('/department')->group(function () {
+    Route::get('/fetch', [DepartmentController::class, 'index']);
+    Route::get('/fetch/{id}', [DepartmentController::class, 'show']);
+    Route::post('/create', [DepartmentController::class, 'store']);
+    Route::post('/edit/{id}', [DepartmentController::class, 'update']);
+    Route::post('/import', [DepartmentController::class, 'import']);
+    Route::delete('/delete/{id}', [DepartmentController::class, 'destroy']);
 });
