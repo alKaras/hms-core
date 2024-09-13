@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\HServicesController;
 use App\Http\Controllers\Api\Auth\AuthController;
@@ -49,4 +50,12 @@ Route::prefix('services')->group(function () {
     Route::get('/fetch', [HServicesController::class, 'index']);
     Route::get('/fetch/{id}', [HServicesController::class, 'show']);
     Route::delete('/delete/{id}', [HServicesController::class, 'destroy']);
+});
+
+Route::prefix('doctors')->group(function () {
+    Route::get('/fetch', [DoctorController::class, 'index']);
+    Route::get('/fetch/{id}', [DoctorController::class, 'index']);
+    Route::post('/create', [DoctorController::class, 'store']);
+    Route::post('/import', [DoctorController::class, 'importDoctors']);
+    Route::delete('/delete/{id}', [DoctorController::class, 'destroy']);
 });
