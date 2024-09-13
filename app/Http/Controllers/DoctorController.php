@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Imports\DoctorImport;
+use App\Notifications\DoctorCredentialsNotification;
 use Validator;
 use App\Models\Role;
 use App\Models\User;
@@ -34,7 +35,7 @@ class DoctorController extends Controller
             'specialization' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'surname' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'unique:users'],
+            'email' => ['required', 'string', 'email'],
             'phone' => ['required', 'numeric'],
             'departments' => ['required', 'array'],
             'departments.*' => ['required', 'string', 'max:255'],
@@ -58,22 +59,28 @@ class DoctorController extends Controller
                 'password' => bcrypt($password),
             ]);
 
-            $neccessaryRoles = Role::whereIn('title', ['user', 'doctor'])->get();
-
-            if ($neccessaryRoles->isEmpty()) {
-                return response()->json([
-                    'status' => 'failure',
-                    'message' => 'No valid rows for provided roles',
-                ]);
-            }
+            $userRole = Role::where('title', 'user')->value('id');
+            $doctorRole = Role::where('title', 'doctor')->value('id');
 
             if ($user) {
-                $now = now();
-                $syncData = $neccessaryRoles->pluck('id')->mapWithKeys(function ($roleId) use ($now) {
-                    return [$roleId => ['created_at' => $now, 'updated_at' => $now]];
-                });
-                $user->roles()->sync($syncData);
+                $user->roles()->attach($userRole, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $user->roles()->attach($doctorRole, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
+        }
+
+        $existedDoctor = Doctor::where('user_id', $user->id)->first();
+        if ($existedDoctor) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => "The doctor for this user id {$user->id} has already been created"
+            ], 500);
         }
 
         $doctor = Doctor::create([
@@ -95,6 +102,8 @@ class DoctorController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        $user->notify(new DoctorCredentialsNotification($user->email, $password));
 
         return response()->json([
             'status' => 'success',
@@ -179,10 +188,12 @@ class DoctorController extends Controller
         }
 
         $doctor->update([
-            'specialization' => $request->specialization,
+            'specialization' => $request->specialization ?? $doctor->specialization,
         ]);
 
-        $departments = Department::whereIn('title', $request->departments)->get();
+        $departments = Department::whereHas('content', function ($query) use ($request) {
+            $query->whereIn('title', $request->departments);
+        })->get();
 
         if ($departments->isEmpty()) {
             return response()->json([

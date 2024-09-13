@@ -30,9 +30,9 @@ class EmailVerificationService
         if ($user) {
             $this->sendVerificationLink($user);
 
-             return response()->json([
-               'status' => 'success',
-               'message' => 'verification link sent successfully',
+            return response()->json([
+                'status' => 'success',
+                'message' => 'verification link sent successfully',
             ]);
         } else {
             return response()->json([
@@ -48,7 +48,7 @@ class EmailVerificationService
 
     protected function verifyToken($user, string $token)
     {
-//        $user = User::where('email', $email)->first();
+        //        $user = User::where('email', $email)->first();
 //
 //        if (!$user){
 //            return response()->json([

@@ -2,15 +2,14 @@
 
 namespace App\Imports;
 
-use App\Models\Department\Department;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Str;
 use App\Models\Doctor\Doctor;
-use Illuminate\Support\Collection;
+use App\Models\Department\Department;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use App\Notifications\DoctorCredentialsNotification;
 
 class DoctorImport implements ToModel, WithHeadingRow
 {
@@ -20,31 +19,38 @@ class DoctorImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         $password = Str::password($length = 12, $letters = true, $numbers = true, $symbols = true);
-        $user = User::firstOrCreate([
-            ['email' => $row['email']],
-            [
+
+        $user = User::where("email", $row["email"])->first();
+        if (!$user) {
+            $user = User::create([
+                'email' => $row['email'],
                 'name' => $row['name'],
                 'surname' => $row['surname'],
                 'phone' => $row['phone'],
                 'password' => bcrypt($password),
-            ]
-        ]);
-
-        $neccessaryRoles = Role::whereIn('title', ['user', 'doctor'])->get();
-
-        if ($neccessaryRoles->isEmpty()) {
-            return response()->json([
-                'status' => 'failure',
-                'message' => 'No valid rows for provided roles',
             ]);
+
+            $userRole = Role::where('title', 'user')->value('id');
+            $doctorRole = Role::where('title', 'doctor')->value('id');
+
+            if ($user) {
+                $user->roles()->attach($userRole, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $user->roles()->attach($doctorRole, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
-        if ($user) {
-            $now = now();
-            $syncData = $neccessaryRoles->pluck('id')->mapWithKeys(function ($roleId) use ($now) {
-                return [$roleId => ['created_at' => $now, 'updated_at' => $now]];
-            });
-            $user->roles()->sync($syncData);
+        $existedDoctor = Doctor::where('user_id', $user->id)->first();
+        if ($existedDoctor) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => "The doctor for this user id {$user->id} has already been created"
+            ], 500);
         }
 
         $doctor = Doctor::create([
@@ -66,6 +72,7 @@ class DoctorImport implements ToModel, WithHeadingRow
                 ]);
             }
         }
+        $user->notify(new DoctorCredentialsNotification($user->email, $password));
         return $doctor;
     }
 }

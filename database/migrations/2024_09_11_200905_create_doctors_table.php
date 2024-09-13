@@ -13,12 +13,13 @@ return new class extends Migration {
         Schema::create('doctors', function (Blueprint $table) {
             $table->id();
             $table->string('specialization');
-            $table->tinyInteger('hidden');
+            $table->tinyInteger('hidden')->default(0);
             $table->unsignedBigInteger('user_id');
             $table->timestamps();
 
 
             $table->foreign('user_id')->references('id')->on('users');
+            $table->unique('user_id');
         });
     }
 
