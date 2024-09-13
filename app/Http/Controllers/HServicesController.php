@@ -155,6 +155,5 @@ class HServicesController extends Controller
             'status' => 'success',
             'message' => 'Service and connected entities deleted successfully',
         ]);
-
     }
 }
