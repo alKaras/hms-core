@@ -7,6 +7,7 @@ use App\Models\Hospital\Hospital;
 use Illuminate\Support\Facades\DB;
 use App\Models\Department\Department;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class DepartmentImport implements ToModel, WithHeadingRow
@@ -16,20 +17,15 @@ class DepartmentImport implements ToModel, WithHeadingRow
      */
     public function model(array $row)
     {
-        if (Department::where("alias", $row['alias'])->get()) {
-            return response()->json([
-                'status' => 'failure',
-                'message' => 'The department for this alias exists',
-            ]);
-        }
+        $existedDepartment = Department::where("alias", $row['alias'])->exists();
 
         $hospital = Hospital::find($row['hospital_id']);
 
-        if (!$row['hospital_id'] || !$hospital) {
-            return response()->json([
+        if (!$hospital || $existedDepartment) {
+            throw ValidationException::withMessages([
                 'status' => 'failure',
-                'message' => 'Hospital id not provided or there\'s  no hospitals for provided id',
-            ], 404);
+                'message' => "An error occurred importing department: Hospital does not exist or department already exists."
+            ]);
         }
 
         $department = Department::create([

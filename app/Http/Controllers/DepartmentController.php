@@ -28,7 +28,7 @@ class DepartmentController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->al(), [
+        $validator = Validator::make($request->all(), [
             'alias' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email'],
             'phone' => ['required', 'string', 'max:13'],
