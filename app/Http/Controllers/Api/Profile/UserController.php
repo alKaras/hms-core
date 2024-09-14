@@ -46,12 +46,19 @@ class UserController extends Controller
 
         $users = User::paginate($perPage);
 
-        return UserResource::collection($users)->additional([
+        return response()->json([
+            'data' => UserResource::collection($users),
             'meta' => [
                 'current_page' => $users->currentPage(),
                 'per_page' => $users->perPage(),
                 'total' => $users->total(),
                 'last_page' => $users->lastPage(),
+            ],
+            'links' => [
+                'first' => $users->url(1),
+                'last' => $users->url($users->lastPage()),
+                'prev' => $users->previousPageUrl(),
+                'next' => $users->nextPageUrl(),
             ]
         ]);
     }
