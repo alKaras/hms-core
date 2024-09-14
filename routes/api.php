@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UserReferralController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DoctorController;
@@ -27,6 +28,9 @@ use App\Http\Controllers\Api\Profile\PasswordController;
 
 require __DIR__ . '/auth.php';
 
+/**
+ * Hospital routes api/hospital
+ */
 Route::prefix('hospital')->group(function () {
     Route::get('fetch', [HospitalController::class, 'index']);
     Route::get('fetch/{id}', [HospitalController::class, 'show']);
@@ -35,6 +39,9 @@ Route::prefix('hospital')->group(function () {
     Route::delete('delete/{id}', [HospitalController::class, 'destroy']);
 });
 
+/**
+ * User routes api/user
+ */
 Route::prefix('user')->group(function () {
     Route::get('fetch', [UserController::class, 'fetchAll']);
     Route::post('create', [UserController::class, 'store']);
@@ -45,6 +52,10 @@ Route::prefix('user')->group(function () {
     Route::delete('delete/{id}', [UserController::class, 'destroy']);
 });
 
+/**
+ * Services routes api/services
+ */
+
 Route::prefix('services')->group(function () {
     Route::post('/create', [HServicesController::class, 'store']);
     Route::post('/import', [HServicesController::class, 'import']);
@@ -53,6 +64,9 @@ Route::prefix('services')->group(function () {
     Route::delete('/delete/{id}', [HServicesController::class, 'destroy']);
 });
 
+/**
+ * Doctors routes api/doctors
+ */
 Route::prefix('doctors')->group(function () {
     Route::get('/fetch', [DoctorController::class, 'index']);
     Route::get('/fetch/{id}', [DoctorController::class, 'show']);
@@ -62,6 +76,9 @@ Route::prefix('doctors')->group(function () {
     Route::delete('/delete/{id}', [DoctorController::class, 'destroy']);
 });
 
+/**
+ * Department routes api/department
+ */
 Route::prefix('/department')->group(function () {
     Route::get('/fetch', [DepartmentController::class, 'index']);
     Route::get('/fetch/{id}', [DepartmentController::class, 'show']);
@@ -69,4 +86,13 @@ Route::prefix('/department')->group(function () {
     Route::put('/edit/{id}', [DepartmentController::class, 'update']);
     Route::post('/import', [DepartmentController::class, 'import']);
     Route::delete('/delete/{id}', [DepartmentController::class, 'destroy']);
+});
+
+/**
+ * UserReferral routes api/userreferral
+ */
+Route::prefix('/userreferral')->group(function () {
+    Route::get('/fetch/{id}', [UserReferralController::class, 'show']);
+    Route::post('/create', [UserReferralController::class, 'store']);
+    Route::delete('/delete/{id}', [UserReferralController::class, 'destroy']);
 });
