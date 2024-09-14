@@ -31,8 +31,9 @@ class UserReferralController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'user_id' => ['required', 'exists:users,id'],
-            'service_id' => ['required', 'exists:services,id'],
-            'department_id' => ['required', 'exists:department,id']
+            'service_ids.*' => ['required', 'exists:services,id'],
+            'service_id' => ['required', 'array']
+            // 'department_id' => ['required', 'exists:department,id']
         ]);
 
         if ($validator->fails()) {
@@ -41,18 +42,27 @@ class UserReferralController extends Controller
             ], 422);
         }
 
+        $services = Hservices::whereIn('id', $request->service_id)->get();
+
         $decodedData = [
             'user' => [
                 'id' => $request->user_id,
                 'name' => User::find($request->user_id)->name,
                 'surname' => User::find($request->user_id)->surname,
             ],
-            'service_id' => $request->service_id,
-            'service_name' => HServices::find($request->service_id)->name,
-            'department' => [
-                'id' => $request->department_id,
-                'title' => Department::find($request->department_id)->content->title,
-            ]
+            'services' => $services->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'department' => $service->department->content->title,
+                ];
+            })
+            // 'service_id' => $request->service_id,
+            // 'service_name' => HServices::find($request->service_id)->name,
+            // 'department' => [
+            //     'id' => $request->department_id,
+            //     'title' => Department::find($request->department_id)->content->title,
+            // ]
         ];
 
         $encodedData = base64_encode(json_encode($decodedData));
