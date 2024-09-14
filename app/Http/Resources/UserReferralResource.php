@@ -16,7 +16,7 @@ class UserReferralResource extends JsonResource
     {
         return [
             'referral_code' => $this->referral_code,
-            'decoded_data' => $this->decoded_data,
+            'decoded_data' => json_decode($this->decoded_data),
             'expired_at' => $this->expired_at
         ];
     }

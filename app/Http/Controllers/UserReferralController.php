@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\HServices;
 use App\Models\UserReferral;
 use Illuminate\Http\Request;
-use App\Http\Resources\UserResource;
 use App\Models\Department\Department;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\UserReferralResource;
@@ -22,7 +21,7 @@ class UserReferralController extends Controller
         $referrals = UserReferral::where("user_id", $userId)
             ->where('expired_at', '>', now())->get();
 
-        return UserResource::collection($referrals);
+        return UserReferralResource::collection($referrals);
     }
 
     /**

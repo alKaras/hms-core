@@ -15,7 +15,8 @@ class UserReferral extends Model
         'referral_code',
         'encoded_data',
         'decoded_data',
-        'user_id'
+        'user_id',
+        'expired_at',
     ];
 
     public function user()

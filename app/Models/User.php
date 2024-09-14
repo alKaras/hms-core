@@ -93,6 +93,6 @@ class User extends Authenticatable implements JWTSubject
 
     public function referral()
     {
-        return $this->hasOne(UserReferral::class);
+        return $this->hasMany(UserReferral::class);
     }
 }
