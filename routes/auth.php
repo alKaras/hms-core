@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\Auth\AuthController;
-use App\Http\Controllers\Api\Profile\PasswordController;
-use App\Http\Controllers\Api\Profile\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserReferralController;
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Profile\UserController;
+use App\Http\Controllers\Api\Profile\PasswordController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -17,4 +18,5 @@ Route::middleware(['jwt.auth'])->group(function () {
 
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/user/me', [UserController::class, 'getMe']);
+    Route::get('/userreferral/fetch', [UserReferralController::class, 'index']);
 });
