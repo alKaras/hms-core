@@ -43,7 +43,9 @@ class AuthController extends Controller
 
         $token = auth()->attempt(['email' => $request->email, 'password' => $request->password]);
         if ($token) {
-            return $this->responseWithToken($token, auth()->user());
+            $user = auth()->user();
+            $roles = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
+            return $this->responseWithToken($token, $user, $roles);
         }
         return response()->json([
             'status' => 'failed',
@@ -170,11 +172,12 @@ class AuthController extends Controller
     /**
      * Return JWT access token
      */
-    protected function responseWithToken($token, $user)
+    protected function responseWithToken($token, $user, $roles = null)
     {
         return response()->json([
             'status' => 'success',
             'user' => $user,
+            'roles' => $roles ?? null,
             'access_token' => $token,
             'type' => 'bearer'
         ]);

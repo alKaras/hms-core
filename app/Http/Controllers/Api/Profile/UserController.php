@@ -23,12 +23,13 @@ class UserController extends Controller
         $user = auth()->user();
 
         //        $roles = $user->roles()->pluck('title')->first();
-        $highestPriorityRole = $user->roles->orderBy('priority', 'desc')->pluck('title')->first();
+        $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
 
         return response()->json([
             'user' => [
                 'data' => $user,
                 'roles' => $highestPriorityRole,
+                'id' => $user->id,
             ]
         ]);
     }
@@ -37,11 +38,22 @@ class UserController extends Controller
      * Fetch all users method (user/fetch)
      */
 
-    public function fetchAll()
+    public function fetchAll(Request $request)
     {
-        $users = User::all();
+        // $users = User::all();
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
-        return UserResource::collection($users);
+        $users = User::paginate($perPage);
+
+        return UserResource::collection($users)->additional([
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+                'last_page' => $users->lastPage(),
+            ]
+        ]);
     }
 
     /**
@@ -155,7 +167,7 @@ class UserController extends Controller
             'email' => $request->email ?? $user->email,
             'phone' => $request->phone ?? $user->phone,
             'active' => $request->active ?? $user->active,
-            'password' => bcrypt($request->password) ?? $user->password
+            'password' => !empty($request->password) ? bcrypt($request->password) : $user->password,
         ]);
 
         return new UserResource($user);
