@@ -15,6 +15,7 @@ class UserReferralResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'referral_id' => $this->id,
             'referral_code' => $this->referral_code,
             'decoded_data' => json_decode($this->decoded_data),
             'expired_at' => $this->expired_at

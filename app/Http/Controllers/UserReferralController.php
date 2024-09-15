@@ -18,8 +18,15 @@ class UserReferralController extends Controller
     public function index(Request $request)
     {
         $userId = $request->user()->id;
-        $referrals = UserReferral::where("user_id", $userId)
-            ->where('expired_at', '>', now())->get();
+        $limit = $request->limit ?? null;
+        $query = UserReferral::where("user_id", $userId)
+            ->where('expired_at', '>', now());
+
+        if ($limit) {
+            $referrals = $query->limit($limit)->get();
+        } else {
+            $referrals = $query->get();
+        }
 
         return UserReferralResource::collection($referrals);
     }
