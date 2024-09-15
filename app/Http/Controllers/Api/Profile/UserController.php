@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Profile;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -189,50 +190,54 @@ class UserController extends Controller
      */
     public function attachRole(Request $request, $user_id)
     {
-        try {
-            $user = User::find($user_id);
+        $user = User::find($user_id);
 
-            if (!$user) {
-                return response()->json([
-                    'status' => 'failure',
-                    'message' => 'User not found',
-                ], 404);
-            }
-
-            $validator = Validator::make($request->all(), [
-                'role' => 'required|string'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'message' => $validator->errors()
-                ], 422);
-            }
-
-            $role = Role::where('title', $request->role)->first();
-
-            if (!$role) {
-                return response()->json([
-                    'status' => 'failure',
-                    'message' => 'Role not found'
-                ], 404);
-            }
-
-            $user->roles()->attach($role->id, [
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Role Attached successfully'
-            ]);
-        } catch (\Exception $e) {
+        if (!$user) {
             return response()->json([
                 'status' => 'failure',
-                'message' => 'An error occurred while attaching role',
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'role' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $role = Role::where('title', $request->role)->first();
+
+        if (!$role) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'Role not found'
+            ], 404);
+        }
+
+        $existedRole = UserRole::where('user_id', $user_id)
+            ->where('role_id', $role->id)
+            ->exists();
+
+        if ($existedRole) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'Role is already attached to user',
             ]);
         }
+
+        $user->roles()->attach($role->id, [
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Role Attached successfully'
+        ]);
     }
 
     /**

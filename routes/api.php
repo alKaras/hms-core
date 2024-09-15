@@ -1,12 +1,13 @@
 <?php
 
-use App\Http\Controllers\UserReferralController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\HServicesController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\UserReferralController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Profile\UserController;
 use App\Http\Controllers\Api\Profile\PasswordController;
@@ -27,6 +28,13 @@ use App\Http\Controllers\Api\Profile\PasswordController;
 //});
 
 require __DIR__ . '/auth.php';
+
+/**
+ * Roles routes api/roles
+ */
+Route::prefix('roles')->group(function () {
+    Route::get('/search', [RoleController::class, 'search']);
+});
 
 /**
  * Hospital routes api/hospital
