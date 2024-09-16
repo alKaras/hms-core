@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\HospitalResource;
-use App\Models\Hospital\Hospital;
 use DB;
 use Illuminate\Http\Request;
+use App\Models\Hospital\Hospital;
+use App\Http\Resources\HospitalResource;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\DepartmentResource;
 
 class HospitalController extends Controller
 {
@@ -83,6 +84,72 @@ class HospitalController extends Controller
         }
         $hospital->load('content');
         return new HospitalResource($hospital);
+    }
+
+
+    /**
+     * Show hospital departments
+     * @param mixed $hospital_id
+     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function showHospitalDepartments($hospital_id)
+    {
+        $hospital = Hospital::with(['departments.content'])
+            ->where('id', $hospital_id)
+            ->first();
+        if (!$hospital) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => "No data for provided id {$hospital_id}",
+            ]);
+        }
+
+        return DepartmentResource::collection($hospital->departments);
+    }
+
+    /**
+     * Show all doctors in the department
+     */
+    public function fetchDepartmentDoctors(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'hospital_id' => ['required', 'integer', 'exists:hospital,id'],
+            'dep_alias' => ['required', 'string', 'exists:department,alias']
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Check provided ids',
+                'error' => $validator->errors()
+            ], 422);
+        }
+        $hospital = Hospital::with(['departments.doctors.user'])
+            ->where('id', $request->hospital_id)
+            ->first();
+
+        if (!$hospital) {
+            return response()->json(['message' => 'Hospital not found'], 404);
+        }
+
+        $department = $hospital->departments->where('alias', $request->dep_alias)->first();
+        if (!$department) {
+            return response()->json(['message' => 'Department not found in this hospital'], 404);
+        }
+        $doctors = $department->doctors;
+
+        return response()->json([
+            'status' => 'success',
+            'doctors' => $doctors->map(function ($doctor) {
+                return [
+                    'id' => $doctor->id,
+                    'name' => $doctor->user->name,
+                    'surname' => $doctor->user->surname,
+                    'email' => $doctor->user->email,
+                    'specialization' => $doctor->specialization,
+                    'hidden' => $doctor->hidden,
+                ];
+            })
+        ]);
     }
 
 
