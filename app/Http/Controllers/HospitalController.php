@@ -51,7 +51,7 @@ class HospitalController extends Controller
             DB::table('hospital_content')->insert([
                 'hospital_id' => $hospital->id,
                 'title' => $request->title,
-                'description' => $request->description,
+                'description' => $request->description ?? "",
                 'address' => $request->address,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -167,10 +167,10 @@ class HospitalController extends Controller
             ], 404);
         }
         $validator = Validator::make($request->all(), [
-            'title' => 'string|max:255|required',
+            'title' => 'string|max:255',
             'description' => 'string|max:255',
-            'address' => 'required|max:255|string',
-            'hospital_email' => 'unique|email',
+            'address' => 'max:255|string',
+            'hospital_email' => 'unique:hospital,hospital_email|string',
             'hospital_phone' => 'string|max:255'
         ]);
 
@@ -186,9 +186,9 @@ class HospitalController extends Controller
         ]);
 
         $hospital->content()->update([
-            'title' => $request->title,
+            'title' => $request->title ?? $hospital->content->title,
             'description' => $request->description ?? $hospital->content->description,
-            'address' => $request->address
+            'address' => $request->address ?? $hospital->content->address
         ]);
 
         $hospital->load('content');
