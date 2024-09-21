@@ -114,7 +114,7 @@ class HospitalController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'hospital_id' => ['required', 'integer', 'exists:hospital,id'],
-            'dep_alias' => ['required', 'string', 'exists:department,alias']
+            'dep_alias' => ['string', 'exists:department,alias']
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -131,22 +131,51 @@ class HospitalController extends Controller
             return response()->json(['message' => 'Hospital not found'], 404);
         }
 
-        $department = $hospital->departments->where('alias', $request->dep_alias)->first();
-        if (!$department) {
-            return response()->json(['message' => 'Department not found in this hospital'], 404);
+        if ($request->dep_alias) {
+            $department = $hospital->departments->where('alias', $request->dep_alias)->first();
+
+            if (!$department) {
+                return response()->json(['message' => 'Department not found in this hospital'], 404);
+            }
+            $doctors = $department->doctors;
+
+            return response()->json([
+                'status' => 'success',
+                'doctors' => $doctors->map(function ($doctor) {
+                    return [
+                        'id' => $doctor->id,
+                        'name' => $doctor->user->name,
+                        'surname' => $doctor->user->surname,
+                        'email' => $doctor->user->email,
+                        'specialization' => $doctor->specialization,
+                        'hidden' => $doctor->hidden,
+                    ];
+                })
+            ]);
         }
-        $doctors = $department->doctors;
+
+        $doctors = DB::table('hospital_departments as hd')
+            ->join('department as d', 'd.id', '=', 'hd.department_id')
+            ->join('department_content as dc', 'dc.department_id', '=', 'd.id')
+            ->join('doctor_departments as dd', 'dd.department_id', '=', 'd.id')
+            ->join('doctors as doctor', 'doctor.id', '=', 'dd.doctor_id')
+            ->join('users as u', 'u.id', '=', 'doctor.user_id')
+            ->where('hd.hospital_id', $hospital->id)
+            ->groupBy('doctor.id')
+            ->selectRaw('doctor.id as id, u.name as name, u.surname as surname, u.email as email, doctor.specialization as specialization, doctor.hidden, GROUP_CONCAT(" ", dc.title) as department_titles')
+            ->get();
 
         return response()->json([
             'status' => 'success',
-            'doctors' => $doctors->map(function ($doctor) {
+            'doctors' => collect($doctors)->map(function ($doctor) {
                 return [
                     'id' => $doctor->id,
-                    'name' => $doctor->user->name,
-                    'surname' => $doctor->user->surname,
-                    'email' => $doctor->user->email,
+                    'name' => $doctor->name,
+                    'surname' => $doctor->surname,
+                    'email' => $doctor->email,
                     'specialization' => $doctor->specialization,
                     'hidden' => $doctor->hidden,
+                    'department_titles' => array_map('trim', explode(',', $doctor->department_titles))
                 ];
             })
         ]);
