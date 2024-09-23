@@ -160,9 +160,11 @@ class HospitalController extends Controller
             ->join('doctor_departments as dd', 'dd.department_id', '=', 'd.id')
             ->join('doctors as doctor', 'doctor.id', '=', 'dd.doctor_id')
             ->join('users as u', 'u.id', '=', 'doctor.user_id')
+            ->leftJoin('doctor_services as ds', 'ds.doctor_id', '=', 'doctor.id')
+            ->leftJoin('services as s', 's.id', '=', 'ds.service_id')
             ->where('hd.hospital_id', $hospital->id)
             ->groupBy('doctor.id')
-            ->selectRaw('doctor.id as id, u.name as name, u.surname as surname, u.email as email, doctor.specialization as specialization, doctor.hidden, GROUP_CONCAT(" ", dc.title) as department_titles')
+            ->selectRaw('doctor.id as id, u.name as name, u.surname as surname, u.email as email, doctor.specialization as specialization, doctor.hidden, GROUP_CONCAT(" ", dc.title) as departments, GROUP_CONCAT(" ", s.name) as services')
             ->get();
 
         return response()->json([
@@ -175,7 +177,8 @@ class HospitalController extends Controller
                     'email' => $doctor->email,
                     'specialization' => $doctor->specialization,
                     'hidden' => $doctor->hidden,
-                    'department_titles' => array_map('trim', explode(',', $doctor->department_titles))
+                    'departments' => array_map('trim', explode(',', $doctor->departments)),
+                    'services' => $doctor->services ? array_map('trim', explode(',', $doctor->services)) : [],
                 ];
             })
         ]);

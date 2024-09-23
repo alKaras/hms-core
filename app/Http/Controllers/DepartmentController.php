@@ -40,7 +40,7 @@ class DepartmentController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'error' => $validator->errors(),
-            ]);
+            ], 422);
         }
 
         $department = Department::create([
@@ -152,16 +152,16 @@ class DepartmentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'title' => ['required', 'string', 'max:255'],
+            'title' => ['string', 'max:255'],
             'description' => ['string', 'max:255'],
-            'email' => ['required', 'email'],
+            'email' => ['email'],
             'phone' => ['string', 'max:13'],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'error' => $validator->errors(),
-            ]);
+            ], 422);
         }
 
         $department->update([
@@ -170,7 +170,7 @@ class DepartmentController extends Controller
         ]);
 
         $department->content()->update([
-            'title' => $request->title,
+            'title' => $request->title ?? $department->title,
             'description' => $request->description ?? $department->description,
         ]);
 

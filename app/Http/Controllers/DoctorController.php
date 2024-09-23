@@ -73,6 +73,7 @@ class DoctorController extends Controller
                     'updated_at' => now(),
                 ]);
             }
+            $user->notify(new DoctorCredentialsNotification($user->email, $password));
         }
 
         $existedDoctor = Doctor::where('user_id', $user->id)->first();
@@ -103,7 +104,7 @@ class DoctorController extends Controller
             'updated_at' => now(),
         ]);
 
-        $user->notify(new DoctorCredentialsNotification($user->email, $password));
+
 
         return response()->json([
             'status' => 'success',
