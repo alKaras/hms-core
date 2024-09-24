@@ -46,6 +46,8 @@ Route::prefix('hospital')->group(function () {
 
     Route::post('/fetch/doctors', [HospitalController::class, 'fetchDepartmentDoctors']);
 
+    Route::post('/fetch/services', [HospitalController::class, 'showHospitalServices']);
+
     Route::post('create', [HospitalController::class, 'store']);
     Route::put('edit/{id}', [HospitalController::class, 'update']);
     Route::delete('delete/{id}', [HospitalController::class, 'destroy']);

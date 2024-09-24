@@ -83,7 +83,7 @@ class HServicesController extends Controller
             return response()->json([
                 'status' => 'failure',
                 'message' => 'An error occurred registering service',
-            ]);
+            ], 500);
         }
     }
 
@@ -144,7 +144,7 @@ class HServicesController extends Controller
             return response()->json([
                 'status' => 'failure',
                 'message' => "Can\'t find any services by provided id #$id",
-            ]);
+            ], 404);
         }
 
         $service->doctors()->detach();

@@ -86,6 +86,64 @@ class HospitalController extends Controller
         return new HospitalResource($hospital);
     }
 
+    /**
+     * Display hospital services
+     * @param mixed $hospital_id
+     * @return void
+     */
+    public function showHospitalServices(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'hospital_id' => ['required', 'integer', 'exists:hospital,id']
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Check provided ids',
+                'error' => $validator->errors()
+            ], 422);
+        }
+
+        $hospital = Hospital::with(['services.doctors.user'])
+            ->where('id', $request->hospital_id)
+            ->first();
+        if (!$hospital) {
+            return response()->json(['message' => 'Hospital not found'], 404);
+        }
+
+        $servicesData = DB::table('hospital_services as hs')
+            ->leftJoin('services as s', 's.id', '=', 'hs.service_id')
+            ->leftJoin('doctor_services as ds', 's.id', '=', 'ds.service_id')
+            ->leftJoin('doctors as doctor', 'ds.doctor_id', '=', 'doctor.id')
+            ->leftJoin('users as u', 'u.id', '=', 'doctor.user_id')
+            ->leftJoin('department as d', 's.department_id', '=', 'd.id')
+            ->leftJoin('department_content as dc', 'dc.department_id', '=', 'd.id')
+            ->where('hs.hospital_id', $hospital->id)
+            ->groupBy('s.id', 's.name', 'dc.title')
+            ->selectRaw("
+                s.id as id, 
+                s.name as service_name, 
+                IFNULL(s.description, '') as description, 
+                dc.title as department, 
+                JSON_ARRAYAGG(JSON_OBJECT('doctor_id', doctor.id, 'name', concat(u.name, ' ', u.surname), 'email', u.email)) as doctorsInfo
+            ")
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'services' => collect($servicesData)->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'service_name' => $service->service_name,
+                    'description' => $service->description,
+                    'department' => $service->department,
+                    'doctorInfo' => json_decode($service->doctorsInfo, true),
+
+                ];
+            })
+        ]);
+    }
+
 
     /**
      * Show hospital departments
