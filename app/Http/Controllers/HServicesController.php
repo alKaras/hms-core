@@ -44,7 +44,7 @@ class HServicesController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['string', 'required', 'max:255'],
-            'description' => ['string', 'max:255'],
+            'description' => ['max:255'],
             'department' => ['required', 'exists:department,alias'],
             'hospital_id' => ['required', 'exists:hospital,id'],
             'doctor_id' => ['required', 'exists:doctors,id']
