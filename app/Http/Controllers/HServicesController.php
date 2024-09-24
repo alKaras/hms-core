@@ -45,7 +45,7 @@ class HServicesController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['string', 'required', 'max:255'],
             'description' => ['string', 'max:255'],
-            'department_id' => ['required', 'exists:department,id'],
+            'department' => ['required', 'exists:department,alias'],
             'hospital_id' => ['required', 'exists:hospital,id'],
             'doctor_id' => ['required', 'exists:doctors,id']
         ]);
@@ -53,14 +53,23 @@ class HServicesController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        $hospital = Hospital::find($request->hospital_id);
+        $department = $hospital->departments->where('alias', $request->department)->first();
+
+        if (!$department) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => "Department for provided alias {$request->department} doesn't exist"
+            ], 404);
+        }
 
         $service = HServices::create([
             'name' => $request->name,
             'description' => $request->description,
-            'department_id' => $request->department_id
+            'department_id' => $department->id
         ]);
 
-        $hospital = Hospital::find($request->hospital_id);
+
         $doctor = Doctor::find($request->doctor_id);
 
         if ($hospital && $doctor) {
