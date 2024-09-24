@@ -2,11 +2,12 @@
 
 namespace App\Imports;
 
-use App\Models\Department\Department;
+use Exception;
+use App\Models\User;
+use App\Models\HServices;
 use App\Models\Doctor\Doctor;
 use App\Models\Hospital\Hospital;
-use App\Models\HServices;
-use App\Models\User;
+use App\Models\Department\Department;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
@@ -20,21 +21,20 @@ class ServicesImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         $department = Department::whereHas("content", function ($query) use ($row) {
-            $query->where('title', $row['department_title']);
+            $query->where('title', trim($row['department_title']));
         })->first();
 
         $hospital = Hospital::whereHas('content', function ($query) use ($row) {
-            $query->where('title', $row['hospital_title']);
+            $query->where('title', trim($row['hospital_title']));
         })->first();
 
-        $user = User::where('name', $row['doctor_name'])
-            ->where('surname', $row['doctor_surname'])
+        $user = User::where('email', $row['doctor_email'])
             ->first();
 
         $doctor = Doctor::where('user_id', $user->id)->first();
 
         if (!$department || !$hospital || !$doctor) {
-            return null;
+            throw new Exception('Error occurred while finding hospital doctor or department');
         }
 
         $service = HServices::create([
