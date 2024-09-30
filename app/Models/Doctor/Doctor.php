@@ -4,6 +4,7 @@ namespace App\Models\Doctor;
 
 use App\Models\Department\Department;
 use App\Models\HServices;
+use App\Models\TimeSlots;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,5 +33,10 @@ class Doctor extends Model
     public function services()
     {
         return $this->belongsToMany(HServices::class, 'doctor_services', 'doctor_id', 'service_id');
+    }
+
+    public function timeSlots()
+    {
+        return $this->hasMany(TimeSlots::class);
     }
 }
