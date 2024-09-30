@@ -6,6 +6,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\HServicesController;
+use App\Http\Controllers\TimeSlotsController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\UserReferralController;
 use App\Http\Controllers\Api\Auth\AuthController;
@@ -109,4 +110,15 @@ Route::prefix('/userreferral')->group(function () {
     Route::get('/fetch/{id}', [UserReferralController::class, 'show']);
     Route::post('/create', [UserReferralController::class, 'store']);
     Route::delete('/delete/{id}', [UserReferralController::class, 'destroy']);
+});
+
+/**
+ * TimeSlots routes api/timeslots
+ */
+Route::prefix('/timeslots')->group(function () {
+    Route::get('/fetch', [TimeSlotsController::class, 'index']);
+    Route::get('/{id}/getbyid', [TimeSlotsController::class, 'show']);
+    Route::post('/create', [TimeSlotsController::class, 'store']);
+    Route::put('/{id}/edit', [TimeSlotsController::class, 'update']);
+    Route::delete('/{id}/destroy', [TimeSlotsController::class, 'destroy']);
 });

@@ -37,4 +37,9 @@ class HServices extends Model
     {
         return $this->belongsToMany(Doctor::class, 'doctor_services', 'service_id', 'doctor_id');
     }
+
+    public function timeSlots()
+    {
+        return $this->hasMany(TimeSlots::class);
+    }
 }
