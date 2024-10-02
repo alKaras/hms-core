@@ -118,6 +118,8 @@ Route::prefix('/userreferral')->group(function () {
 Route::prefix('/timeslots')->group(function () {
     Route::get('/fetch', [TimeSlotsController::class, 'index']);
     Route::get('/{id}/getbyid', [TimeSlotsController::class, 'show']);
+    Route::post('/getbydoctor', [TimeSlotsController::class, 'showByDoctor']);
+    Route::post('/getbyservice', [TimeSlotsController::class, 'showByService']);
     Route::post('/create', [TimeSlotsController::class, 'store']);
     Route::put('/{id}/edit', [TimeSlotsController::class, 'update']);
     Route::delete('/{id}/destroy', [TimeSlotsController::class, 'destroy']);

@@ -34,6 +34,61 @@ class TimeSlotsController extends Controller
         return new TimeSlotsResource($timeslot);
     }
 
+    public function showByDoctor(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'doctor_id' => ['required', 'exists:doctors,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'Check provided data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $doctor = Doctor::find($request->doctor_id);
+        if (!$doctor) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => "An error occurred while searching for doctor ID#{$request->doctor_id}"
+            ]);
+        }
+
+        $doctorTimeslots = TimeSlots::with('doctor.user')->where('doctor_id', $doctor->id)->get()->first();
+        if (empty($doctorTimeslots)) {
+            return response()->json([
+                'data' => []
+            ]);
+        }
+        return new TimeSlotsResource($doctorTimeslots);
+
+    }
+
+    public function showByService(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'service_id' => ['required', 'exists:services,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'Check provided data',
+                'errors' => $validator->errors(),
+            ]);
+        }
+
+        $serviceTimeSlots = TimeSlots::with('service')->where('service_id', $request->service_id)->get()->first();
+        if (empty($serviceTimeSlots)) {
+            return response()->json([
+                'data' => []
+            ]);
+        }
+        return new TimeSlotsResource($serviceTimeSlots);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
