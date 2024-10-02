@@ -239,6 +239,7 @@ class TimeSlotsController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            'doctor_id' => ['exists:doctors,id'],
             'start_time' => ['date_format:Y-m-d H:i'],
             'end_time' => ['date_format:Y-m-d H:i'],
             'price' => ['numeric'],
@@ -253,6 +254,7 @@ class TimeSlotsController extends Controller
         }
 
         $timeSlot->update([
+            'doctor_id' => $request->doctor_id ?? $timeSlot->doctor_id,
             'start_time' => $request->start_time ?? $timeSlot->start_time,
             'end_time' => $request->end_time ?? $timeSlot->end_time,
             'price' => $request->price ?? $timeSlot->price,
