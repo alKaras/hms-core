@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Imports\DoctorImport;
+use App\Models\HServices;
 use App\Notifications\DoctorCredentialsNotification;
 use Validator;
 use App\Models\Role;
@@ -24,6 +25,45 @@ class DoctorController extends Controller
     {
         $doctors = Doctor::all();
         return DoctorResource::collection($doctors);
+    }
+
+
+    /**
+     * Show doctors by service Id
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showByServiceId(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'service_id' => ['required', 'exists:services,id']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Check provided data',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $service = HServices::find($request->input('service_id'));
+
+        $doctors = $service->doctors;
+        return response()->json([
+            'status' => 'success',
+            'data' => $doctors->filter(function ($doctor) {
+                return $doctor->hidden === 0;
+            })
+                ->map(function ($doctor) {
+                    return [
+                        'id' => $doctor->id,
+                        'name' => $doctor->user->name,
+                        'surname' => $doctor->user->surname,
+                        'email' => $doctor->user->email,
+                    ];
+                })
+        ]);
     }
 
     /**

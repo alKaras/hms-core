@@ -86,6 +86,7 @@ Route::prefix('doctors')->group(function () {
     Route::get('/fetch', [DoctorController::class, 'index']);
     Route::get('/fetch/{id}', [DoctorController::class, 'show']);
     Route::post('/create', [DoctorController::class, 'store']);
+    Route::post('/getbyservice', [DoctorController::class, 'showByServiceId']);
     Route::put('/edit/{id}', [DoctorController::class, 'update']);
     Route::post('/import', [DoctorController::class, 'importDoctors']);
     Route::delete('/delete/{id}', [DoctorController::class, 'destroy']);
@@ -120,6 +121,8 @@ Route::prefix('/timeslots')->group(function () {
     Route::get('/{id}/getbyid', [TimeSlotsController::class, 'show']);
     Route::post('/getbydoctor', [TimeSlotsController::class, 'showByDoctor']);
     Route::post('/getbyservice', [TimeSlotsController::class, 'showByService']);
+    Route::post('/getbydate', [TimeSlotsController::class, 'showByDate']);
+    Route::post('/generate', [TimeSlotsController::class, 'generateTimeSlots']);
     Route::post('/create', [TimeSlotsController::class, 'store']);
     Route::put('/{id}/edit', [TimeSlotsController::class, 'update']);
     Route::delete('/{id}/destroy', [TimeSlotsController::class, 'destroy']);
