@@ -31,7 +31,6 @@ class OrderExpiration
                 'is_canceled' => 1,
             ]);
             $order->save();
-            $order->orderServices()->save();
 
             return response()->json([
                 'message' => 'Order Expired'

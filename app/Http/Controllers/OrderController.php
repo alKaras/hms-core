@@ -89,7 +89,6 @@ class OrderController extends Controller
 
         try {
             $paymentIntent = PaymentIntent::update($request->input('payment_intent_id'), ['payment_method' => $request->input('payment_method_id')]);
-
             if ($paymentIntent->status === 'succeeded') {
                 $order->update([
                     'status' => 'paid',
@@ -99,7 +98,7 @@ class OrderController extends Controller
 
                 return response()->json(['message' => 'Payment confirmed successfully'], 200);
             } else {
-                return response()->json(['message' => 'Payment not completed yet. Current status: ' . $paymentIntent->status], 400);
+                return response()->json(['message' => "Payment not completed yet. Current status: {$paymentIntent->status}"], 400);
             }
 
 
