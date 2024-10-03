@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Validator;
 use Carbon\Carbon;
+use App\Models\HServices;
 use App\Models\TimeSlots;
 use Illuminate\Http\Request;
 use App\Models\Doctor\Doctor;
@@ -108,18 +109,22 @@ class TimeSlotsController extends Controller
     public function showByDate(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'date' => ['required', 'date_format:Y-m-d']
+            'date' => ['required', 'date_format:Y-m-d'],
+            'service_id' => ['exists:services,id'],
+            'doctor_id' => ['exists:doctors,id']
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'failure',
-                'message' => 'Invalid date format',
+                'message' => 'Invalid data',
                 'errors' => $validator->errors(),
             ], 422);
         }
 
         $date = $request->input('date');
+        $service = HServices::find($request->input('service_id'));
+        $doctor = Doctor::find($request->input('doctor_id'));
         $timeslots = TimeSlots::byDate($date)->get();
 
         if ($timeslots->isEmpty()) {
@@ -127,6 +132,21 @@ class TimeSlotsController extends Controller
                 'status' => 'failure',
                 'message' => 'No timeslots found for the selected date',
             ], 404);
+        }
+
+        if (null !== $service) {
+            $serviceTimeSlots = $timeslots->filter(fn($timeslot) => $timeslot->service_id == $service->id);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => TimeSlotsResource::collection($serviceTimeSlots),
+            ]);
+        } elseif (null !== $doctor) {
+            $doctorTimeSlots = $timeslots->filter(fn($timeslot) => $doctor->id == $timeslot->doctor_id);
+            return response()->json([
+                'status' => 'success',
+                'data' => TimeSlotsResource::collection($doctorTimeSlots),
+            ]);
         }
 
         return response()->json([
