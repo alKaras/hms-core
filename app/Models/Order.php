@@ -9,10 +9,17 @@ class Order extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'total_amount',
-        'status'
+        'status',
+        'created_at',
+        'confirmed_at',
+        'cancelled_at',
+        'cancel_reason',
+        'reserve_exp'
     ];
 
     public function orderServices()

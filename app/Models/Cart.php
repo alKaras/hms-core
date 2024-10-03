@@ -11,7 +11,8 @@ class Cart extends Model
 
     protected $fillable = [
         'user_id',
-        'session_id'
+        'session_id',
+        'expired_at',
     ];
 
     public function items()

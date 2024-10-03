@@ -14,10 +14,17 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->decimal('total_amount', 10, 2);
-            $table->string('status')->default('pending'); // pending, completed, canceled
-            $table->timestamps();
+
+            $table->timestamp('created_at')->default(now());
+            $table->timestamp('confirmed_at')->nullable()->default(null);
+            $table->string('status')->default('pending'); // pending, paid, canceled
+
+            $table->timestamp('cancelled_at')->nullable()->default(null);
+            $table->string('cancel_reason')->nullable()->default(null);
+            $table->timestamp('reserve_exp')->default(now()->addMinutes(15));
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->timestamp('updated_at')->default(now());
         });
     }
 

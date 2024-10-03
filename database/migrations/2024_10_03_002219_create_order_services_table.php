@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('order_id');
             $table->unsignedBigInteger('time_slot_id');
             $table->decimal('price', 10, 2);
+            $table->tinyInteger('is_canceled')->default(0);
             $table->timestamps();
 
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');

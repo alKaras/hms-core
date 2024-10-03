@@ -48,7 +48,14 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Order created successfully. Waiting for payment confirmation',
-                'paymentIntent' => $paymentIntent,
+                'data' => [
+                    'payment_int_id' => $paymentIntent->id,
+                    'amount' => $paymentIntent->amount,
+                    'canceled_at' => $paymentIntent->canceled_at,
+                    'cancellation_reason' => $paymentIntent->cancellation_reason,
+                    'client_secret' => $paymentIntent->client_secret,
+                    'created' => $paymentIntent->created,
+                ],
                 'order_id' => $order->id,
             ], 200);
 
@@ -78,11 +85,26 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $order->update([
-            'status' => 'paid',
-            'updated_at' => now(),
-        ]);
-        $order->save();
-        return response()->json(['message' => 'Payment confirmed successfully'], 200);
+        Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        try {
+            $paymentIntent = PaymentIntent::update($request->input('payment_intent_id'), ['payment_method' => $request->input('payment_method_id')]);
+
+            if ($paymentIntent->status === 'succeeded') {
+                $order->update([
+                    'status' => 'paid',
+                    'confirmed_at' => now(),
+                ]);
+                $order->save();
+
+                return response()->json(['message' => 'Payment confirmed successfully'], 200);
+            } else {
+                return response()->json(['message' => 'Payment not completed yet. Current status: ' . $paymentIntent->status], 400);
+            }
+
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error confirming payment: ' . $e->getMessage()], 500);
+        }
     }
 }

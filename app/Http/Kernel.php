@@ -4,6 +4,7 @@ namespace App\Http;
 
 use App\Http\Middleware\CartExpiration;
 use App\Http\Middleware\JwtMiddleware;
+use App\Http\Middleware\OrderExpiration;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Http\Middleware\HandleCors;
 
@@ -69,5 +70,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'jwt.auth' => JwtMiddleware::class,
         'cart.expiration' => CartExpiration::class,
+        'order.expiration' => OrderExpiration::class,
     ];
 }

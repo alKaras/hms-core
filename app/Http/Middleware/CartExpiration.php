@@ -21,7 +21,7 @@ class CartExpiration
 
         $cart = Cart::where('user_id', $user->id)->first();
 
-        if ($cart && $cart->created_at->addMinutes(15) < Carbon::now()) {
+        if ($cart && $cart->expired_at < Carbon::now()) {
             $cart->items()->delete();
             $cart->delete();
 

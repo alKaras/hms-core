@@ -23,9 +23,10 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::get('/userreferral/fetch', [UserReferralController::class, 'index']);
 });
 
-Route::middleware(['jwt.auth', 'cart.expiration'])->group(function () {
+Route::middleware(['jwt.auth', 'cart.expiration', 'order.expiration'])->group(function () {
     Route::post('/cart/add', [CartController::class, 'addToCart']);
     Route::get('/cart/get', [CartController::class, 'getCart']);
     Route::delete('/cart/item/{itemId}/remove', [CartController::class, 'removeItem']);
     Route::post('/cart/checkout', [OrderController::class, 'checkout']);
+    Route::post('/cart/payment/confirm', [OrderController::class, 'confirm']);
 });

@@ -12,7 +12,8 @@ class OrderServices extends Model
     protected $fillable = [
         'order_id',
         'time_slot_id',
-        'price'
+        'price',
+        'is_canceled',
     ];
 
     public function order()
