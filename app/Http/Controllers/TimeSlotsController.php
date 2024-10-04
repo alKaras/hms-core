@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\TimeSlotsResource;
-use App\Models\Doctor\Doctor;
+use Validator;
+use Carbon\Carbon;
+use App\Models\HServices;
 use App\Models\TimeSlots;
 use Illuminate\Http\Request;
-use Validator;
+use App\Models\Doctor\Doctor;
+use App\Http\Resources\TimeSlotsResource;
 
 class TimeSlotsController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the TimeSlots.
      */
     public function index()
     {
@@ -20,7 +22,7 @@ class TimeSlotsController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified TimeSlot.
      */
     public function show($id)
     {
@@ -32,6 +34,125 @@ class TimeSlotsController extends Controller
             ], 404);
         }
         return new TimeSlotsResource($timeslot);
+    }
+
+    /**
+     * Display timeslots by Doctor
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function showByDoctor(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'doctor_id' => ['required', 'exists:doctors,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'Check provided data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $doctor = Doctor::find($request->doctor_id);
+        if (!$doctor) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => "An error occurred while searching for doctor ID#{$request->doctor_id}"
+            ]);
+        }
+
+        $doctorTimeslots = TimeSlots::with('doctor.user')->where('doctor_id', $doctor->id)->get();
+        if (empty($doctorTimeslots)) {
+            return response()->json([
+                'data' => []
+            ]);
+        }
+        return TimeSlotsResource::collection($doctorTimeslots);
+
+    }
+
+    /**
+     * Display timeslots by serviceId
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function showByService(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'service_id' => ['required', 'exists:services,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'Check provided data',
+                'errors' => $validator->errors(),
+            ]);
+        }
+
+        $serviceTimeSlots = TimeSlots::with('service')->where('service_id', $request->service_id)->get();
+        if (empty($serviceTimeSlots)) {
+            return response()->json([
+                'data' => []
+            ]);
+        }
+        return TimeSlotsResource::collection($serviceTimeSlots);
+    }
+
+    /**
+     * Display timeslots by date
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showByDate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date_format:Y-m-d'],
+            'service_id' => ['exists:services,id'],
+            'doctor_id' => ['exists:doctors,id']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'Invalid data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $date = $request->input('date');
+        $service = HServices::find($request->input('service_id'));
+        $doctor = Doctor::find($request->input('doctor_id'));
+        $timeslots = TimeSlots::byDate($date)->get();
+
+        if ($timeslots->isEmpty()) {
+            return response()->json([
+                'status' => 'failure',
+                'data' => [],
+            ], 200);
+        }
+
+        if (null !== $service) {
+            $serviceTimeSlots = $timeslots->filter(fn($timeslot) => $timeslot->service_id == $service->id);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => TimeSlotsResource::collection($serviceTimeSlots),
+            ]);
+        } elseif (null !== $doctor) {
+            $doctorTimeSlots = $timeslots->filter(fn($timeslot) => $doctor->id == $timeslot->doctor_id);
+            return response()->json([
+                'status' => 'success',
+                'data' => TimeSlotsResource::collection($doctorTimeSlots),
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => TimeSlotsResource::collection($timeslots),
+        ], 200);
     }
 
     /**
@@ -70,6 +191,58 @@ class TimeSlotsController extends Controller
         ]);
     }
 
+    /**
+     * Generate TimeSlots
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function generateTimeSlots(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'service_id' => ['required', 'exists:services,id'],
+            'doctor_id' => ['required', 'exists:doctors,id'],
+            'start_time' => ['required', 'date_format:Y-m-d H:i', 'before:end_time'],
+            'end_time' => ['required', 'date_format:Y-m-d H:i', 'after:start_time'],
+            'price' => ['required', 'numeric'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'An error occurred during validation of provided data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $serviceId = $request->input('service_id');
+        $doctorId = $request->input('doctor_id');
+        $price = $request->input('price');
+        $startTime = Carbon::parse($request->input('start_time'));
+        $endTime = Carbon::parse($request->input('end_time'));
+
+        $timeslots = [];
+
+        for ($current = $startTime; $current->lt($endTime); $current->addHour()) {
+            $timeslots[] = [
+                'service_id' => $serviceId,
+                'doctor_id' => $doctorId,
+                'start_time' => $current->toDateTimeString(),
+                'end_time' => $current->copy()->addHour()->toDateTimeString(),
+                'price' => $price,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        TimeSlots::insert($timeslots);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Timeslots successfully generated for serviceId$serviceId",
+            'data' => $timeslots
+        ]);
+    }
+
 
 
     /**
@@ -86,6 +259,7 @@ class TimeSlotsController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            'doctor_id' => ['exists:doctors,id'],
             'start_time' => ['date_format:Y-m-d H:i'],
             'end_time' => ['date_format:Y-m-d H:i'],
             'price' => ['numeric'],
@@ -100,6 +274,7 @@ class TimeSlotsController extends Controller
         }
 
         $timeSlot->update([
+            'doctor_id' => $request->doctor_id ?? $timeSlot->doctor_id,
             'start_time' => $request->start_time ?? $timeSlot->start_time,
             'end_time' => $request->end_time ?? $timeSlot->end_time,
             'price' => $request->price ?? $timeSlot->price,

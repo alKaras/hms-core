@@ -29,4 +29,9 @@ class TimeSlots extends Model
     {
         return $this->belongsTo(HServices::class);
     }
+
+    public function scopeByDate($query, $date)
+    {
+        return $query->whereDate('start_time', $date);
+    }
 }
