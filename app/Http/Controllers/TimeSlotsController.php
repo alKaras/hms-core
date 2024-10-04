@@ -130,8 +130,8 @@ class TimeSlotsController extends Controller
         if ($timeslots->isEmpty()) {
             return response()->json([
                 'status' => 'failure',
-                'message' => 'No timeslots found for the selected date',
-            ], 404);
+                'data' => [],
+            ], 200);
         }
 
         if (null !== $service) {
