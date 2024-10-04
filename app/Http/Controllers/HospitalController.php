@@ -222,7 +222,7 @@ class HospitalController extends Controller
             ->leftJoin('services as s', 's.id', '=', 'ds.service_id')
             ->where('hd.hospital_id', $hospital->id)
             ->groupBy('doctor.id')
-            ->selectRaw('doctor.id as id, u.name as name, u.surname as surname, u.email as email, doctor.specialization as specialization, doctor.hidden, GROUP_CONCAT(" ", dc.title) as departments, GROUP_CONCAT(" ", s.name) as services')
+            ->selectRaw('doctor.id as id, u.name as name, u.surname as surname, u.email as email, doctor.specialization as specialization, doctor.hidden, GROUP_CONCAT(distinct dc.title) as departments, GROUP_CONCAT(distinct s.name) as services')
             ->get();
 
         return response()->json([
