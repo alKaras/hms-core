@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
@@ -29,6 +30,9 @@ use App\Http\Controllers\Api\Profile\PasswordController;
 //});
 
 require __DIR__ . '/auth.php';
+
+Route::post('/webhook', [OrderController::class, 'stripeHookHandler']);
+Route::post('/checkout/cancel', [OrderController::class, 'cancel']);
 
 /**
  * Roles routes api/roles

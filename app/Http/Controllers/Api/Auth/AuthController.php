@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use App\Customs\Services\EmailVerificationService;
-use App\Http\Controllers\Controller;
+use Stripe\Customer;
+use Stripe\Stripe;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
+use App\Customs\Services\EmailVerificationService;
 
 class AuthController extends Controller
 {
@@ -79,11 +81,20 @@ class AuthController extends Controller
             ], 422);
         }
 
+        Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        $customer = Customer::create([
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'name' => $request->name . ' ' . $request->surname,
+        ]);
+
         $user = User::create([
             'name' => $request->name,
             'surname' => $request->surname,
             'email' => $request->email,
             'phone' => $request->phone,
+            'stripe_customer_id' => $customer->id,
             'password' => bcrypt($request->password),
         ]);
 
