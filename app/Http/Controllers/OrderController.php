@@ -88,7 +88,6 @@ class OrderController extends Controller
         return response()->json([
             'session_id' => $session->id,
             'session_url' => $session->url,
-            'payment_intent' => $session->payment_intent->id,
             'customer' => $session->customer,
             'line_items' => $lineItems
         ]);
