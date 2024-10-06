@@ -34,4 +34,9 @@ class TimeSlots extends Model
     {
         return $query->whereDate('start_time', $date);
     }
+
+    public function items()
+    {
+        return $this->hasMany(CartItems::class);
+    }
 }
