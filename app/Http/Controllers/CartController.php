@@ -19,6 +19,7 @@ class CartController extends Controller
             $cart = Cart::create([
                 "user_id" => $user->id,
                 "session_id" => session()->getId(),
+                "expired_at" => now()->addMinutes(15),
             ]);
 
             $timeSlot = TimeSlots::find($request->time_slot_id);
@@ -56,7 +57,7 @@ class CartController extends Controller
     public function getCart()
     {
         $user = auth()->user();
-        $cart = Cart::where('user_id', $user->id)->with('items.timeSlots')->first();
+        $cart = Cart::where('user_id', $user->id)->with('items.timeslot')->first();
 
         if (empty($cart)) {
             return response()->json(['message' => 'Cart is empty']);
@@ -94,5 +95,21 @@ class CartController extends Controller
 
         $cartItem->delete();
         return response()->json(['message' => 'Item removed successfully']);
+    }
+
+    public function cancelCart($id)
+    {
+        $cart = Cart::find($id);
+        if (!$cart) {
+            return response()->json(['message' => 'Cart is not found'], 404);
+        }
+
+        $cart->items()->delete();
+        $cart->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cart deleted successfully',
+        ]);
     }
 }

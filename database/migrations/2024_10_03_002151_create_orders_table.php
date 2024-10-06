@@ -21,10 +21,9 @@ return new class extends Migration {
 
             $table->timestamp('cancelled_at')->nullable()->default(null);
             $table->string('cancel_reason')->nullable()->default(null);
-            $table->timestamp('reserve_exp')->default(now()->addMinutes(15));
+            $table->timestamp('reserve_exp');
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->timestamp('updated_at')->default(now());
         });
     }
 

@@ -20,7 +20,7 @@ class CartItems extends Model
         return $this->belongsTo(Cart::class);
     }
 
-    public function timeSlots()
+    public function timeslot()
     {
         return $this->belongsTo(TimeSlots::class);
     }

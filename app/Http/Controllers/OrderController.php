@@ -2,17 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cart;
-use App\Models\Order;
-use Illuminate\Http\Request;
-use Stripe\PaymentIntent;
+use Exception;
 use Stripe\Stripe;
+use App\Models\Cart;
+use App\Models\User;
+use App\Models\Order;
+use Stripe\StripeClient;
+use App\Models\HServices;
+use App\Models\TimeSlots;
+use Stripe\PaymentIntent;
+use App\Models\OrderPayment;
+use Illuminate\Http\Request;
+use App\Models\OrderPaymentLog;
+use Illuminate\Support\Facades\Log;
+use Stripe\Service\Climate\OrderService;
+use App\Http\Resources\OrderServiceResource;
 
 class OrderController extends Controller
 {
+    /**
+     * Order checkout method
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
     public function checkout(Request $request)
     {
         $user = auth()->user();
+        Stripe::setApiKey(env('STRIPE_SECRET'));
 
         $cart = Cart::where("user_id", $user->id)->with('items')->first();
         if (!$cart || $cart->items->isEmpty()) {
@@ -25,85 +41,184 @@ class OrderController extends Controller
             'user_id' => $user->id,
             'total_amount' => $totalAmount,
             'status' => 'pending',
+            'created_at' => now(),
+            'reserve_exp' => now()->addMinutes(15),
+            'updated_at' => now(),
         ]);
+
+        $lineItems = [];
 
         foreach ($cart->items as $item) {
             $order->orderServices()->create([
                 'time_slot_id' => $item->time_slot_id,
                 'price' => $item->price,
             ]);
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'uah',
+                    'product_data' => [
+                        'name' => TimeSlots::find($item->time_slot_id)->service->name,
+                    ],
+                    'unit_amount' => TimeSlots::find($item->time_slot_id)->price * 100,
+                ],
+                'quantity' => 1,
+            ];
         }
+
+
+        $session = \Stripe\Checkout\Session::create([
+            'customer' => User::find($user->id)->stripe_customer_id,
+            'line_items' => $lineItems,
+            'mode' => 'payment',
+            'success_url' => env("REACT_APP_URL") . "/checkout/payment/success?session_id={CHECKOUT_SESSION_ID}",
+            'cancel_url' => env("REACT_APP_URL") . "/checkout/payment/cancel",
+        ]);
+
+        if ($order) {
+            OrderPayment::create([
+                'order_id' => $order->id,
+                'session_id' => $session->id,
+            ]);
+        }
+
 
         $cart->items()->delete();
         $cart->delete();
 
-        Stripe::setApiKey(env('STRIPE_SECRET'));
-
-        try {
-            $paymentIntent = PaymentIntent::create([
-                'amount' => $totalAmount * 100,
-                'currency' => 'usd',
-                'payment_method_types' => ['card'],
-            ]);
-
-            return response()->json([
-                'message' => 'Order created successfully. Waiting for payment confirmation',
-                'data' => [
-                    'payment_int_id' => $paymentIntent->id,
-                    'amount' => $paymentIntent->amount,
-                    'canceled_at' => $paymentIntent->canceled_at,
-                    'cancellation_reason' => $paymentIntent->cancellation_reason,
-                    'client_secret' => $paymentIntent->client_secret,
-                    'created' => $paymentIntent->created,
-                ],
-                'order_id' => $order->id,
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Checkout failed  ' . $e->getMessage()], 500);
-        }
+        return response()->json([
+            'session_id' => $session->id,
+            'session_url' => $session->url,
+            'payment_intent' => $session->payment_intent->id,
+            'customer' => $session->customer,
+            'line_items' => $lineItems
+        ]);
 
     }
 
     /**
-     * /order/confirm-payment
+     * Stripe webhook handler
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function confirm(Request $request)
+    public function stripeHookHandler(Request $request)
     {
-        $user = auth()->user();
-        $order = Order::where('id', $request->order_id)->where('user_id', $user->id)->first();
+        $payload = $request->getContent();
+        $sig_header = $request->header('Stripe-Signature');
+        $endpoint_secret = env('STRIPE_WEBHOOK_SECRET');
 
-        if (!$order) {
+        try {
+            $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $endpoint_secret);
+        } catch (\UnexpectedValueException $e) {
             return response()->json([
-                'message' => 'Order not found',
-            ], 404);
-        }
-
-        if ($order->status === 'paid') {
+                'message' => 'Invalid payload'
+            ], 400);
+        } catch (\Stripe\Exception\SignatureVerificationException $e) {
             return response()->json([
-                'message' => 'Order has already paid'
+                'message' => 'Invalid signature'
             ], 400);
         }
 
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+        switch ($event->type) {
+            case 'checkout.session.completed':
+                $session = $event->data->object;
+                $orderPayment = OrderPayment::where('session_id', $session->id)->first();
 
-        try {
-            $paymentIntent = PaymentIntent::update($request->input('payment_intent_id'), ['payment_method' => $request->input('payment_method_id')]);
-            if ($paymentIntent->status === 'succeeded') {
-                $order->update([
-                    'status' => 'paid',
-                    'confirmed_at' => now(),
-                ]);
-                $order->save();
+                if ($orderPayment) {
+                    $order = Order::find($orderPayment->order_id);
 
-                return response()->json(['message' => 'Payment confirmed successfully'], 200);
-            } else {
-                return response()->json(['message' => "Payment not completed yet. Current status: {$paymentIntent->status}"], 400);
-            }
+                    $order->update([
+                        'status' => 'paid',
+                        'confirmed_at' => now(),
+                        'updated_at' => now(),
+                    ]);
 
+                    OrderPaymentLog::create([
+                        'order_payment_id' => $orderPayment->id,
+                        'event' => 'payment_success',
+                        'attributes' => json_encode($session) ?? json_encode('[]'),
+                    ]);
 
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Error confirming payment: ' . $e->getMessage()], 500);
+                    $orderPayment->update([
+                        'payment_id' => $event->data->payment_intent->id,
+                        'updated_at' => now(),
+                    ]);
+                }
+                //Send notification to the User email
+                break;
+
+            default:
+                // Unexpected event type
+                return response()->json(['message' => 'Unhandled event type'], 400);
+        }
+        return response()->json(['message' => 'Webhook handled successfully'], 200);
+
+    }
+
+    /**
+     * Cancel order method | Cancel order when user navigate to checkout/payment/cancel
+     */
+    public function cancel(Request $request)
+    {
+        $order = Order::find($request->id);
+        if (!$order) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'There is no orders by provided id',
+            ], 404);
+        }
+
+        if ($order->status == 'pending' && $order->confirmed_at === null && $order->reserve_exp < now()) {
+            $order->update([
+                'status' => 'canceled',
+                'cancelled_at' => now(),
+                'cancel_reason' => 'Canceled by user',
+            ]);
+
+            $order->orderServices()->update([
+                'is_canceled' => 1,
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order canceled successfully',
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Something went wrong'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Order Services collection
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function getOrderServices()
+    {
+        $orderService = OrderService::all();
+        return OrderServiceResource::collection($orderService);
+    }
+
+    /**
+     * Get Order by session method 
+     * @param mixed $sessionId
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getOrderBySession($sessionId)
+    {
+        $order = OrderPayment::whereColumn('session_id', $sessionId)->first();
+        if ($order) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $order,
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No orders by provided session'
+            ], 404);
         }
     }
 }

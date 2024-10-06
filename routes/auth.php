@@ -23,10 +23,13 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::get('/userreferral/fetch', [UserReferralController::class, 'index']);
 });
 
+/**
+ * ShoppingCart routes
+ */
 Route::middleware(['jwt.auth', 'cart.expiration', 'order.expiration'])->group(function () {
-    Route::post('/cart/add', [CartController::class, 'addToCart']);
-    Route::get('/cart/get', [CartController::class, 'getCart']);
-    Route::delete('/cart/item/{itemId}/remove', [CartController::class, 'removeItem']);
-    Route::post('/cart/checkout', [OrderController::class, 'checkout']);
-    Route::post('/cart/payment/confirm', [OrderController::class, 'confirm']);
+    Route::post('/shoppingcart/add', [CartController::class, 'addToCart']);
+    Route::get('/shoppingcart/get', [CartController::class, 'getCart']);
+    Route::delete('/shoppingcart/item/{itemId}/remove', [CartController::class, 'removeItem']);
+    Route::post('/shoppingcart/checkout', [OrderController::class, 'checkout']);
+    Route::delete('/shoppingcart/cancel', [CartController::class, 'cancelCart']);
 });
