@@ -71,7 +71,7 @@ class OrderController extends Controller
             'line_items' => $lineItems,
             'mode' => 'payment',
             'success_url' => env("REACT_APP_URL") . "/checkout/payment/success?session_id={CHECKOUT_SESSION_ID}",
-            'cancel_url' => env("REACT_APP_URL") . "/checkout/payment/cancel",
+            'cancel_url' => env("REACT_APP_URL") . "/checkout/payment/cancel?session_id={CHECKOUT_SESSION_ID}",
         ]);
 
         if ($order) {
@@ -158,7 +158,8 @@ class OrderController extends Controller
      */
     public function cancel(Request $request)
     {
-        $order = Order::find($request->id);
+        $orderPayment = OrderPayment::where('session_id', $request->session_id)->first();
+        $order = Order::find($orderPayment->order->id);
         if (!$order) {
             return response()->json([
                 'status' => 'failure',
@@ -166,7 +167,7 @@ class OrderController extends Controller
             ], 404);
         }
 
-        if ($order->status == 'pending' && $order->confirmed_at === null && $order->reserve_exp < now()) {
+        if ($order->status == 'pending' && $order->confirmed_at === null) {
             $order->update([
                 'status' => 'canceled',
                 'cancelled_at' => now(),
