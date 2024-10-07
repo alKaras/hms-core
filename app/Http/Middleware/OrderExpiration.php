@@ -19,13 +19,13 @@ class OrderExpiration
     {
         $user = auth()->user();
 
-        $order = Order::where('user_id', $user->id)
-            ->where('status', 'pending')->first();
+        $order = Order::where('user_id', value: $user->id)
+            ->where('status', value: 1)->first();
 
-        if ($order && $order->confirmed_at == null && $order->status === 'pending' && $order->reserve_exp < Carbon::now()) {
+        if ($order && $order->confirmed_at == null && $order->status === 1 && $order->reserve_exp < Carbon::now()) {
             $order->update([
                 'cancelled_at' => Carbon::now(),
-                'status' => 'canceled',
+                'status' => 3,
                 'cancel_reason' => 'Order Expired',
             ]);
             $order->orderServices()->update([

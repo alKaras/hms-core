@@ -28,7 +28,7 @@ class CheckExpiredOrders extends Command
      */
     public function handle()
     {
-        $expiredOrders = Order::where('status', '=', 'pending')
+        $expiredOrders = Order::where('status', '=', 1)
             ->where('confirmed_at', '=', null)
             ->where('reserve_exp', '<', now()->subMinutes(10))
             ->get();
@@ -38,7 +38,7 @@ class CheckExpiredOrders extends Command
 
             $order->update([
                 'cancelled_at' => now(),
-                'status' => 'cancelled',
+                'status' => 3,
                 'cancel_reason' => 'Order Expired',
             ]);
 

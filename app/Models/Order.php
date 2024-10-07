@@ -37,4 +37,9 @@ class Order extends Model
     {
         return $this->has(OrderPayment::class);
     }
+
+    public function status()
+    {
+        return $this->belongsTo(OrderStatusRef::class);
+    }
 }

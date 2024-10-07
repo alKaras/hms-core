@@ -44,7 +44,7 @@ class OrderController extends Controller
             'user_id' => $user->id,
             'sum_total' => $totalAmount,
             'sum_subtotal' => $subtotalAmount,
-            'status' => 'pending',
+            'status' => 1, //pending
             'created_at' => now(),
             'reserve_exp' => now()->addMinutes(15),
             'updated_at' => now(),
@@ -110,7 +110,7 @@ class OrderController extends Controller
 
             $order->update([
                 'confirmed_at' => now(),
-                'status' => 'paid',
+                'status' => 2,
                 'updated_at' => now(),
             ]);
 
@@ -155,7 +155,7 @@ class OrderController extends Controller
                     $order = Order::find($orderPayment->order_id);
 
                     $order->update([
-                        'status' => 'paid',
+                        'status' => 2,
                         'confirmed_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -198,7 +198,7 @@ class OrderController extends Controller
 
         if ($order->status == 'pending' && $order->confirmed_at === null) {
             $order->update([
-                'status' => 'canceled',
+                'status' => 3,
                 'cancelled_at' => now(),
                 'cancel_reason' => 'Canceled by user',
             ]);
