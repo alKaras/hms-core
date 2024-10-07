@@ -65,33 +65,48 @@ class OrderController extends Controller
             ];
         }
 
+        if ($totalAmount > 0) {
+            $session = \Stripe\Checkout\Session::create([
+                'customer' => User::find($user->id)->stripe_customer_id,
+                'line_items' => $lineItems,
+                'mode' => 'payment',
+                'success_url' => env("REACT_APP_URL") . "/checkout/payment/success?session_id={CHECKOUT_SESSION_ID}",
+                'cancel_url' => env("REACT_APP_URL") . "/checkout/payment/cancel?session_id={CHECKOUT_SESSION_ID}",
+            ]);
 
-        $session = \Stripe\Checkout\Session::create([
-            'customer' => User::find($user->id)->stripe_customer_id,
-            'line_items' => $lineItems,
-            'mode' => 'payment',
-            'success_url' => env("REACT_APP_URL") . "/checkout/payment/success?session_id={CHECKOUT_SESSION_ID}",
-            'cancel_url' => env("REACT_APP_URL") . "/checkout/payment/cancel?session_id={CHECKOUT_SESSION_ID}",
-        ]);
+            if ($order) {
+                OrderPayment::create([
+                    'order_id' => $order->id,
+                    'session_id' => $session->id,
+                ]);
+            }
 
-        if ($order) {
-            OrderPayment::create([
-                'order_id' => $order->id,
+
+            $cart->items()->delete();
+            $cart->delete();
+
+            return response()->json([
                 'session_id' => $session->id,
+                'session_url' => $session->url,
+                'customer' => $session->customer,
+                'line_items' => $lineItems
+            ]);
+        } else {
+            $cart->items()->delete();
+            $cart->delete();
+
+            $order->update([
+                'confirmed_at' => now(),
+                'status' => 'paid',
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'success_url' => env("REACT_APP_URL") . "/checkout/payment/success?order_id={$order->id}",
+                'order' => $order,
             ]);
         }
-
-
-        $cart->items()->delete();
-        $cart->delete();
-
-        return response()->json([
-            'session_id' => $session->id,
-            'session_url' => $session->url,
-            'customer' => $session->customer,
-            'line_items' => $lineItems
-        ]);
-
     }
 
     /**
