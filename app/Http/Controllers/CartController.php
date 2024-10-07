@@ -89,6 +89,7 @@ class CartController extends Controller
                         'service_id' => TimeSlots::find($item->time_slot_id)->service->id,
                         'name' => TimeSlots::find($item->time_slot_id)->service->name,
                         'department' => TimeSlots::find($item->time_slot_id)->service->department->content->title,
+                        'start_time' => TimeSlots::find($item->time_slot_id)->start_time,
                     ],
                     'price' => $item->price,
                 ];
