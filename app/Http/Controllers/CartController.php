@@ -59,7 +59,7 @@ class CartController extends Controller
         } else {
             return response()->json([
                 'status' => 'error',
-                'error' => 'Forbidden',
+                'error' => 'Access denied',
                 'message' => 'Provided user is not verified'
             ], 403);
         }
@@ -72,7 +72,7 @@ class CartController extends Controller
         $cart = Cart::where('user_id', $user->id)->with('items.timeslot')->first();
 
         if (empty($cart)) {
-            return response()->json(['message' => 'Cart is empty']);
+            return response()->json(['message' => 'Cart is empty', 'data' => []]);
         }
         return response()->json([
             'id' => $cart->id,
