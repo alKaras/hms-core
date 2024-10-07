@@ -13,6 +13,7 @@ class OrderServices extends Model
         'order_id',
         'time_slot_id',
         'price',
+        'fee',
         'is_canceled',
     ];
 

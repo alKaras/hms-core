@@ -20,6 +20,7 @@ use App\Http\Resources\OrderServiceResource;
 
 class OrderController extends Controller
 {
+    private const ORDER_PAYMENT_COMMISSION = 0.1;
     /**
      * Order checkout method
      * @param \Illuminate\Http\Request $request
@@ -35,11 +36,14 @@ class OrderController extends Controller
             return response()->json(['message' => 'Cart is empty'], 404);
         }
 
-        $totalAmount = $cart->items->sum('price');
+        $sumPrice = $cart->items->sum('price');
+        $totalAmount = $sumPrice + $sumPrice * self::ORDER_PAYMENT_COMMISSION;
+        $subtotalAmount = $cart->items->sum('price');
 
         $order = Order::create([
             'user_id' => $user->id,
-            'total_amount' => $totalAmount,
+            'sum_total' => $totalAmount,
+            'sum_subtotal' => $subtotalAmount,
             'status' => 'pending',
             'created_at' => now(),
             'reserve_exp' => now()->addMinutes(15),
@@ -52,6 +56,7 @@ class OrderController extends Controller
             $order->orderServices()->create([
                 'time_slot_id' => $item->time_slot_id,
                 'price' => $item->price,
+                'fee' => $item->price * self::ORDER_PAYMENT_COMMISSION,
             ]);
             $lineItems[] = [
                 'price_data' => [
@@ -59,7 +64,7 @@ class OrderController extends Controller
                     'product_data' => [
                         'name' => TimeSlots::find($item->time_slot_id)->service->name,
                     ],
-                    'unit_amount' => TimeSlots::find($item->time_slot_id)->price * 100,
+                    'unit_amount' => (TimeSlots::find($item->time_slot_id)->price + TimeSlots::find($item->time_slot_id)->price * self::ORDER_PAYMENT_COMMISSION) * 100,
                 ],
                 'quantity' => 1,
             ];
@@ -75,10 +80,18 @@ class OrderController extends Controller
             ]);
 
             if ($order) {
-                OrderPayment::create([
+                $orderPayment = OrderPayment::create([
                     'order_id' => $order->id,
                     'session_id' => $session->id,
                 ]);
+
+                if ($orderPayment) {
+                    OrderPaymentLog::create([
+                        'order_payment_id' => $orderPayment->id,
+                        'event' => 'payment_created',
+                        'attributes' => '{}'
+                    ]);
+                }
             }
 
 
@@ -105,6 +118,7 @@ class OrderController extends Controller
                 'status' => 'success',
                 'success_url' => env("REACT_APP_URL") . "/checkout/payment/success?order_id={$order->id}",
                 'order' => $order,
+                'line_items' => $lineItems
             ]);
         }
     }
@@ -153,7 +167,7 @@ class OrderController extends Controller
                     ]);
 
                     $orderPayment->update([
-                        'payment_id' => $event->data->payment_intent->id,
+                        'payment_id' => $session->payment_intent,
                         'updated_at' => now(),
                     ]);
                 }
@@ -191,6 +205,13 @@ class OrderController extends Controller
 
             $order->orderServices()->update([
                 'is_canceled' => 1,
+                'updated_at' => now(),
+            ]);
+
+            $order->orderPayments()->create([
+                'order_payment_id' => $orderPayment->id,
+                'event' => 'payment_canceled',
+                'attributes' => json_encode('{"code": "payment_declined", "status": "failure", "err_description": "Failed to proceed payment. Check your parameters"}'),
                 'updated_at' => now(),
             ]);
 

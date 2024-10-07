@@ -19,7 +19,8 @@ class OrderServiceResource extends JsonResource
             "is_canceled" => (int) $this->is_canceled,
             "order" => [
                 "id" => $this->order->id,
-                "total_amount" => $this->order->total_amount,
+                "sum_total" => $this->order->sum_total,
+                "sum_subtotal" => $this->order->sum_subtotal,
                 "created_at" => $this->order->created_at,
                 "confirmed_at" => $this->order->confirmed_at,
                 "status" => $this->order->status,

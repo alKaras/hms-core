@@ -13,7 +13,8 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
-        'total_amount',
+        'sum_total',
+        'sum_subtotal',
         'status',
         'created_at',
         'confirmed_at',
