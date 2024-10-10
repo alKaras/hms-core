@@ -33,7 +33,7 @@ require __DIR__ . '/auth.php';
 
 Route::post('/webhook', [OrderController::class, 'stripeHookHandler']);
 Route::post('/checkout/cancel', [OrderController::class, 'cancel']);
-
+Route::post('/order/get', [OrderController::class, 'getOrderByFilter']);
 /**
  * Roles routes api/roles
  */

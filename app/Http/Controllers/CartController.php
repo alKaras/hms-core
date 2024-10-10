@@ -72,7 +72,7 @@ class CartController extends Controller
         $cart = Cart::where('user_id', $user->id)->with('items.timeslot')->first();
 
         if (empty($cart)) {
-            return response()->json(['message' => 'Cart is empty', 'data' => []]);
+            return response()->json(['message' => 'Cart is empty'], 404);
         }
         return response()->json([
             'id' => $cart->id,

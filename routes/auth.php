@@ -27,9 +27,9 @@ Route::middleware(['jwt.auth'])->group(function () {
  * ShoppingCart routes
  */
 Route::middleware(['jwt.auth', 'cart.expiration', 'order.expiration'])->group(function () {
-    Route::post('/shoppingcart/add', [CartController::class, 'addToCart']);
-    Route::get('/shoppingcart/get', [CartController::class, 'getCart']);
+    Route::post('/shoppingcart/item/add', [CartController::class, 'addToCart']);
+    Route::get('/shoppingcart/items/get', [CartController::class, 'getCart']);
     Route::delete('/shoppingcart/item/{itemId}/remove', [CartController::class, 'removeItem']);
     Route::post('/shoppingcart/checkout', [OrderController::class, 'checkout']);
-    Route::delete('/shoppingcart/cancel', [CartController::class, 'cancelCart']);
+    Route::delete('/shoppingcart/{id}/reset', [CartController::class, 'cancelCart']);
 });

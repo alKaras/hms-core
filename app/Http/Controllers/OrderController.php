@@ -195,8 +195,7 @@ class OrderController extends Controller
                 'message' => 'There is no orders by provided id',
             ], 404);
         }
-
-        if ($order->status == 'pending' && $order->confirmed_at === null) {
+        if ($order->status === 1 && $order->confirmed_at === null) {
             $order->update([
                 'status' => 3,
                 'cancelled_at' => now(),
@@ -208,10 +207,14 @@ class OrderController extends Controller
                 'updated_at' => now(),
             ]);
 
-            $order->orderPayments()->create([
+            $orderPayment->paymentLogs()->create([
                 'order_payment_id' => $orderPayment->id,
                 'event' => 'payment_canceled',
-                'attributes' => json_encode('{"code": "payment_declined", "status": "failure", "err_description": "Failed to proceed payment. Check your parameters"}'),
+                'attributes' => json_encode([
+                    "code" => "payment_declined",
+                    "status" => "failure",
+                    "err_description" => "Failed to proceed payment. Check your parameters"
+                ]),
                 'updated_at' => now(),
             ]);
 
@@ -242,19 +245,40 @@ class OrderController extends Controller
      * @param mixed $sessionId
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function getOrderBySession($sessionId)
+    public function getOrderByFilter(Request $request)
     {
-        $order = OrderPayment::whereColumn('session_id', $sessionId)->first();
-        if ($order) {
-            return response()->json([
-                'status' => 'success',
-                'data' => $order,
-            ]);
+        if ($request->session_id !== null) {
+            //Searching by session_id
+            $order = OrderPayment::whereColumn('session_id', $request->session_id)->first();
+            if ($order) {
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $order,
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No orders by provided session'
+                ], 404);
+            }
+        } elseif ($request->order_id !== null) {
+            $order = Order::find($request->order_id);
+            if ($order) {
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $order,
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No orders by provided id'
+                ], 404);
+            }
         } else {
             return response()->json([
                 'status' => 'error',
-                'message' => 'No orders by provided session'
-            ], 404);
+                'message' => 'Something Went Wrong'
+            ], 500);
         }
     }
 }
