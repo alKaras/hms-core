@@ -15,7 +15,7 @@ use App\Models\OrderPayment;
 use Illuminate\Http\Request;
 use App\Models\OrderPaymentLog;
 use Illuminate\Support\Facades\Log;
-use Stripe\Service\Climate\OrderService;
+use App\Models\OrderServices;
 use App\Http\Resources\OrderServiceResource;
 
 class OrderController extends Controller
@@ -236,7 +236,7 @@ class OrderController extends Controller
      */
     public function getOrderServices()
     {
-        $orderService = OrderService::all();
+        $orderService = OrderServices::all();
         return OrderServiceResource::collection($orderService);
     }
 
@@ -249,11 +249,25 @@ class OrderController extends Controller
     {
         if ($request->session_id !== null) {
             //Searching by session_id
-            $order = OrderPayment::whereColumn('session_id', $request->session_id)->first();
-            if ($order) {
+            $orderPayment = OrderPayment::where('session_id', $request->session_id)->first();
+            //Get orderInfo 
+            if ($orderPayment) {
+                $order = Order::find($orderPayment->order_id);
+                $orderServices = OrderServices::where('order_id', $order->id)->get();
+
                 return response()->json([
-                    'status' => 'success',
-                    'data' => $order,
+                    "order" => [
+                        "id" => $order->id,
+                        "sum_total" => $order->sum_total,
+                        "sum_subtotal" => $order->sum_subtotal,
+                        "created_at" => $order->created_at,
+                        "confirmed_at" => $order->confirmed_at,
+                        "status" => $order->status === 2 ? 'SOLD' : ($order->status === 1 ? 'PENDING' : 'CANCELED'),
+                        "reserve_exp" => $order->reserve_exp,
+                        "cancelled_at" => $order->cancelled_at,
+                        "cancel_reason" => $order->cancel_reason,
+                    ],
+                    "order_services" => OrderServiceResource::collection($orderServices),
                 ]);
             } else {
                 return response()->json([

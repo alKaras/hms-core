@@ -17,32 +17,25 @@ class OrderServiceResource extends JsonResource
         return [
             "id" => $this->id,
             "is_canceled" => (int) $this->is_canceled,
-            "order" => [
-                "id" => $this->order->id,
-                "sum_total" => $this->order->sum_total,
-                "sum_subtotal" => $this->order->sum_subtotal,
-                "created_at" => $this->order->created_at,
-                "confirmed_at" => $this->order->confirmed_at,
-                "status" => $this->order->status,
-                "reserve_exp" => $this->order->reserve_exp,
-                "cancelled_at" => $this->order->cancelled_at,
-                "cancel_reason" => $this->order->cancel_reason,
-            ],
             "timesot" => [
                 "id" => $this->timeSlot->id,
-                "doctor" => [
-                    "id" => $this->timeSlot->doctor->id,
-                    "fullname" => $this->timeSlot->doctor->user->name . " " . $this->timeSlot->doctor->user->surname,
-                    "email" => $this->timeSlot->doctor->user->email,
-                ],
+                // "doctor" => [
+                //     "id" => $this->timeSlot->doctor->id,
+                //     "fullname" => $this->timeSlot->doctor->user->name . " " . $this->timeSlot->doctor->user->surname,
+                //     "email" => $this->timeSlot->doctor->user->email,
+                // ],
                 "service" => [
                     "id" => $this->timeSLot->service->id,
                     "name" => $this->timeSlot->service->name,
                     "department" => $this->timeSlot->service->department->content->title,
                 ],
-                "start_time" => $this->start_time,
-                "end_time" => $this->end_time,
-                "price" => $this->price,
+                "department" => [
+                    "id" => $this->timeSlot->service->department->id,
+                    "title" => $this->timeSlot->service->department->content->title,
+                ],
+                "start_time" => $this->timeSlot->start_time,
+                "end_time" => $this->timeSlot->end_time,
+                "price" => $this->timeSlot->price,
             ]
         ];
     }
