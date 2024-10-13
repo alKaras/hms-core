@@ -56,6 +56,7 @@ class DoctorImport implements ToModel, WithHeadingRow
         $doctor = Doctor::create([
             'user_id' => $user->id,
             'specialization' => $row['specialization'],
+            'hospital_id' => $row['hospitalId'],
         ]);
 
         if (!empty($row['departments'])) {

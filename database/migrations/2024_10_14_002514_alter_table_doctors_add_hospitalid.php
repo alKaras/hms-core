@@ -10,8 +10,8 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->integer('status')->default(0)->after('confirmed_at');
+        Schema::table('doctors', function (Blueprint $table) {
+            $table->integer('hospital_id')->nullable()->default(null)->after('user_id');
         });
     }
 
@@ -20,7 +20,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('doctors', function (Blueprint $table) {
             //
         });
     }

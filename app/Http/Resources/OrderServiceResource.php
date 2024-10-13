@@ -17,7 +17,7 @@ class OrderServiceResource extends JsonResource
         return [
             "id" => $this->id,
             "is_canceled" => (int) $this->is_canceled,
-            "timesot" => [
+            "timeslot" => [
                 "id" => $this->timeSlot->id,
                 // "doctor" => [
                 //     "id" => $this->timeSlot->doctor->id,

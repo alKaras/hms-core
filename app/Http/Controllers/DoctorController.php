@@ -79,6 +79,7 @@ class DoctorController extends Controller
             'phone' => ['required', 'numeric'],
             'departments' => ['required', 'array'],
             'departments.*' => ['required', 'string', 'max:255'],
+            'hospital_id' => ['required', 'exists:hospital,id'],
         ]);
 
         if ($validator->fails()) {
@@ -127,6 +128,7 @@ class DoctorController extends Controller
         $doctor = Doctor::create([
             'specialization' => $request->specialization,
             'user_id' => $user->id,
+            'hospital_id' => $request->hospital_id,
         ]);
 
         $departments = Department::whereHas('content', function ($query) use ($request) {

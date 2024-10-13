@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Api\Profile;
 
+use App\Http\Resources\DoctorResource;
+use App\Models\Doctor\Doctor;
+use App\Models\Hospital\Hospital;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserRole;
@@ -25,12 +28,13 @@ class UserController extends Controller
 
         //        $roles = $user->roles()->pluck('title')->first();
         $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
-
+        $hospitalId = Hospital::find($user->doctor->hospital_id)->first();
         return response()->json([
             'user' => [
                 'data' => $user,
                 'roles' => $highestPriorityRole,
                 'id' => $user->id,
+                'hospitalId' => $hospitalId->id ?? null,
             ]
         ]);
     }

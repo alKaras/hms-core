@@ -2,12 +2,13 @@
 
 namespace App\Models\Doctor;
 
-use App\Models\Department\Department;
+use App\Models\User;
 use App\Models\HServices;
 use App\Models\TimeSlots;
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Hospital\Hospital;
+use App\Models\Department\Department;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Doctor extends Model
 {
@@ -18,6 +19,7 @@ class Doctor extends Model
         'specialization',
         'hidden',
         'user_id',
+        'hospital_id',
     ];
 
     public function user()
@@ -38,5 +40,10 @@ class Doctor extends Model
     public function timeSlots()
     {
         return $this->hasMany(TimeSlots::class);
+    }
+
+    public function hospital()
+    {
+        return $this->belongsTo(Hospital::class);
     }
 }

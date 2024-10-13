@@ -31,6 +31,7 @@ class DoctorResource extends JsonResource
                     'name' => $department->content->title,
                 ];
             }),
+            'hospitalId' => $this->hospital_id,
         ];
     }
 }
