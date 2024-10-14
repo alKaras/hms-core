@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('referral_code');
-            $table->string('encoded_data');
+            $table->longText('encoded_data');
             $table->json('decoded_data');
             $table->timestamp('expired_at');
             $table->timestamps();

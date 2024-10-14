@@ -79,7 +79,7 @@ class UserReferralController extends Controller
             'referral_code' => $this->generateCode(),
             'encoded_data' => $encodedData,
             'decoded_data' => json_encode($decodedData),
-            'expired_at' => now()->addMonth(),
+            'expired_at' => now()->addYear(),
         ]);
 
         return new UserReferralResource($userReferral);
