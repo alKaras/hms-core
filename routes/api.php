@@ -80,6 +80,7 @@ Route::prefix('services')->group(function () {
     Route::post('/import', [HServicesController::class, 'import']);
     Route::get('/fetch', [HServicesController::class, 'index']);
     Route::get('/fetch/{id}', [HServicesController::class, 'show']);
+    Route::post('/getbydoctor', [HServicesController::class, 'getServicesByDoctorId']);
     Route::delete('/delete/{id}', [HServicesController::class, 'destroy']);
 });
 

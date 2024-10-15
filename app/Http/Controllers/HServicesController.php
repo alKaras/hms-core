@@ -38,6 +38,45 @@ class HServicesController extends Controller
     }
 
     /**
+     * Get services by doctorId
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function getServicesByDoctorId(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'doctor_id' => ['required', 'exists:doctors,id']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'failure',
+                'message' => 'check provided doctor_id',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $doctor = Doctor::with(['services'])->where('id', $request->doctor_id)->first();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $doctor->services->map(function ($service) {
+                return [
+                    "id" => $service->id,
+                    "name" => $service->name,
+                    "description" => $service->description,
+                    "department" => [
+                        "id" => $service->department->id,
+                        "title" => $service->department->content->title,
+                    ]
+                ];
+            })
+        ]);
+
+
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
