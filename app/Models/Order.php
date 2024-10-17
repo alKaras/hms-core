@@ -35,10 +35,10 @@ class Order extends Model
 
     public function orderPayments()
     {
-        return $this->has(OrderPayment::class);
+        return $this->hasOne(OrderPayment::class);
     }
 
-    public function status()
+    public function orderStatus()
     {
         return $this->belongsTo(OrderStatusRef::class);
     }
