@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderFiltersEnum;
 use App\Http\Resources\OrderResource;
 use DB;
 use Stripe\Stripe;
@@ -263,14 +264,14 @@ class OrderController extends Controller
             ], 422);
         }
         $limit = $request->limit ?? null;
-        $filter = $request->input('filter');
+        $filterEnum = OrderFiltersEnum::tryFrom($request->input('filter'));
         $sessionId = $request->input('session_id') ?? null;
         $orderId = $request->input('order_id') ?? null;
         $doctorId = $request->input('doctor_id') ?? null;
         $userId = $request->input('user_id') ?? null;
 
-        switch ($filter) {
-            case "OrdersbyId":
+        switch ($filterEnum) {
+            case OrderFiltersEnum::OrdersById:
                 if ($orderId !== null) {
                     return $this->responseByOrderId($orderId);
                 } else {
@@ -280,7 +281,7 @@ class OrderController extends Controller
                     ], 500);
                 }
 
-            case 'OrdersbySession':
+            case OrderFiltersEnum::OrdersbySession:
                 if ($sessionId !== null) {
                     return $this->responseBySessionId($sessionId);
                 } else {
@@ -290,7 +291,7 @@ class OrderController extends Controller
                     ], 500);
                 }
 
-            case 'OrdersbyDoctor':
+            case OrderFiltersEnum::OrdersbyDoctor:
                 if ($doctorId !== null) {
                     return $this->responseByDoctorId($doctorId);
                 } else {
@@ -300,7 +301,7 @@ class OrderController extends Controller
                     ], 500);
                 }
 
-            case 'OrdersbyUser':
+            case OrderFiltersEnum::OrdersbyUser:
                 if ($userId !== null) {
                     return $this->responseByUserId($userId, $limit);
                 } else {
