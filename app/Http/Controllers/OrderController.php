@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Doctor\Doctor;
+use App\Http\Resources\OrderResource;
 use DB;
-use Exception;
 use Stripe\Stripe;
 use App\Models\Cart;
 use App\Models\User;
 use App\Models\Order;
-use Stripe\StripeClient;
-use App\Models\HServices;
 use App\Models\TimeSlots;
-use Stripe\PaymentIntent;
 use App\Models\OrderPayment;
 use Illuminate\Http\Request;
-use App\Models\OrderPaymentLog;
-use Illuminate\Support\Facades\Log;
+use App\Models\Doctor\Doctor;
 use App\Models\OrderServices;
+use App\Models\OrderPaymentLog;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\OrderServiceResource;
 
 class OrderController extends Controller
@@ -243,24 +240,81 @@ class OrderController extends Controller
     }
 
     /**
-     * Get Order by session method 
-     * @param mixed $sessionId
+     * Get Order/s by filter 
+     * @param Request $request {required filter [string] | session_id | order_id | doctor_id | user_id}
      * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function getOrderByFilter(Request $request)
     {
 
-        if ($request->session_id !== null) {
-            return $this->responseBySessionId($request->session_id);
-        } elseif ($request->order_id !== null) {
-            return $this->responseByOrderId($request->order_id);
-        } elseif ($request->doctor_id !== null) {
-            return $this->responseByDoctorId($request->doctor_id);
-        } else {
+        $validator = Validator::make($request->all(), [
+            'filter' => ['required', 'string'],
+            'session_id' => ['exists:order_payments,session_id'],
+            'order_id' => ['exists:orders,id'],
+            'doctor_id' => ['exists:doctors,id'],
+            'user_id' => ['exists:users,id']
+        ]);
+
+        if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Something Went Wrong'
-            ], 500);
+                'message' => 'Check provided data',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $limit = $request->limit ?? null;
+        $filter = $request->input('filter');
+        $sessionId = $request->input('session_id') ?? null;
+        $orderId = $request->input('order_id') ?? null;
+        $doctorId = $request->input('doctor_id') ?? null;
+        $userId = $request->input('user_id') ?? null;
+
+        switch ($filter) {
+            case "OrdersbyId":
+                if ($orderId !== null) {
+                    return $this->responseByOrderId($orderId);
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Order Id is required for this filter'
+                    ], 500);
+                }
+
+            case 'OrdersbySession':
+                if ($sessionId !== null) {
+                    return $this->responseBySessionId($sessionId);
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'SessionId is required for this filter'
+                    ], 500);
+                }
+
+            case 'OrdersbyDoctor':
+                if ($doctorId !== null) {
+                    return $this->responseByDoctorId($doctorId);
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'DoctorId is required for this filter'
+                    ], 500);
+                }
+
+            case 'OrdersbyUser':
+                if ($userId !== null) {
+                    return $this->responseByUserId($userId, $limit);
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'UserId is required for this filter'
+                    ], 500);
+                }
+
+            default:
+                return response()->json([
+                    'status' => 'error',
+                    'error' => 'Provided filter is not recognised'
+                ], 400);
         }
     }
 
@@ -300,17 +354,7 @@ class OrderController extends Controller
             $orderServices = OrderServices::where('order_id', $order->id)->get();
 
             return response()->json([
-                "order" => [
-                    "id" => $order->id,
-                    "sum_total" => $order->sum_total,
-                    "sum_subtotal" => $order->sum_subtotal,
-                    "created_at" => $order->created_at,
-                    "confirmed_at" => $order->confirmed_at,
-                    "status" => $order->status === 2 ? 'SOLD' : ($order->status === 1 ? 'PENDING' : 'CANCELED'),
-                    "reserve_exp" => $order->reserve_exp,
-                    "cancelled_at" => $order->cancelled_at,
-                    "cancel_reason" => $order->cancel_reason,
-                ],
+                "order" => new OrderResource(resource: $order),
                 "order_services" => OrderServiceResource::collection(resource: $orderServices),
             ]);
         } else {
@@ -321,6 +365,11 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * Responder for filtering orders by DoctorId
+     * @param mixed $doctor_id
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
     private function responseByDoctorId($doctor_id)
     {
         $doctor = Doctor::find($doctor_id);
@@ -360,6 +409,36 @@ class OrderController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => "No data for provided doctor_id #{$doctor_id}"
+            ], 404);
+        }
+    }
+
+    /**
+     * Responder for filtering orders by UserId
+     * @param mixed $user_id
+     * @param mixed $limit
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function responseByUserId($user_id, $limit = null)
+    {
+        $query = Order::where('user_id', '=', $user_id);
+        $orders = $limit ? $query->limit($limit)->get() : $query->get();
+
+        if (!empty($orders)) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $orders->map(function ($order) {
+                    $orderServices = OrderServices::where('order_id', '=', $order->id)->get();
+                    return [
+                        'order' => new OrderResource($order),
+                        'services' => OrderServiceResource::collection(resource: $orderServices),
+                    ];
+                })
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'There is no orders for provided user'
             ], 404);
         }
     }
