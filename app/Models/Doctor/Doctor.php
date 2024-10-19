@@ -2,13 +2,13 @@
 
 namespace App\Models\Doctor;
 
-use App\Models\User;
+use App\Models\Department\Department;
+use App\Models\Hospital\Hospital;
 use App\Models\HServices;
 use App\Models\TimeSlots;
-use App\Models\Hospital\Hospital;
-use App\Models\Department\Department;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\User\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Doctor extends Model
 {

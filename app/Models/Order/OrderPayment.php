@@ -1,20 +1,18 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Order;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class OrderServices extends Model
+class OrderPayment extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'order_id',
-        'time_slot_id',
-        'price',
-        'fee',
-        'is_canceled',
+        'session_id',
+        'payment_id',
     ];
 
     public function order()
@@ -22,8 +20,8 @@ class OrderServices extends Model
         return $this->belongsTo(Order::class);
     }
 
-    public function timeSlot()
+    public function paymentLogs()
     {
-        return $this->belongsTo(TimeSlots::class);
+        return $this->hasMany(OrderPaymentLog::class);
     }
 }

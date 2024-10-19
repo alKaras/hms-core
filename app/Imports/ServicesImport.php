@@ -2,12 +2,12 @@
 
 namespace App\Imports;
 
-use Exception;
-use App\Models\User;
-use App\Models\HServices;
+use App\Models\Department\Department;
 use App\Models\Doctor\Doctor;
 use App\Models\Hospital\Hospital;
-use App\Models\Department\Department;
+use App\Models\HServices;
+use App\Models\User\User;
+use Exception;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 

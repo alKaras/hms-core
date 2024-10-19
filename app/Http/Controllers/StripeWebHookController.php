@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Stripe\Event;
-use App\Models\Order;
+use App\Models\Order\Order;
 use Illuminate\Http\Request;
 
 class StripeWebHookController extends Controller
@@ -22,11 +22,12 @@ class StripeWebHookController extends Controller
             return response()->json(['message' => 'Invalid payload'], 400);
         }
 
-        if ($event->type == 'payment_intent.succeeded') {
-            $paymentIntent = $event->data->object;
+        //TODO delete if it's not neccessary 
+        // if ($event->type == 'payment_intent.succeeded') {
+        //     $paymentIntent = $event->data->object;
 
-            $order = Order::where('stripe.payment_id', $paymentIntent->id)->first();
+        //     $order = Order::where('stripe.payment_id', $paymentIntent->id)->first();
 
-        }
+        // }
     }
 }

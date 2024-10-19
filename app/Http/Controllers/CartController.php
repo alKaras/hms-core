@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Models\Cart;
-use App\Models\User;
-use App\Models\CartItems;
+use App\Models\Cart\Cart;
+use App\Models\Cart\CartItems;
 use App\Models\TimeSlots;
+use App\Models\User\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CartController extends Controller

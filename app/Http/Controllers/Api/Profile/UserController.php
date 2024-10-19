@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers\Api\Profile;
 
-use App\Http\Resources\DoctorResource;
-use App\Models\Doctor\Doctor;
-use App\Models\Hospital\Hospital;
-use App\Models\Role;
-use App\Models\User;
-use App\Models\UserRole;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Models\Hospital\Hospital;
+use App\Models\Role;
+use App\Models\User\User;
+use App\Models\User\UserRole;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 

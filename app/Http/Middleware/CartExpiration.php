@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Cart\Cart;
 use Carbon\Carbon;
 use Closure;
-use App\Models\Cart;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 

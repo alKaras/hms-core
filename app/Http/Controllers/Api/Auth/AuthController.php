@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use Stripe\Customer;
-use Stripe\Stripe;
-use App\Models\Role;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Customs\Services\EmailVerificationService;
 use App\Http\Controllers\Controller;
+use App\Models\Role;
+use App\Models\User\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
-use App\Customs\Services\EmailVerificationService;
+use Stripe\Customer;
+use Stripe\Stripe;
 
 class AuthController extends Controller
 {

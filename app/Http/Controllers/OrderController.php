@@ -4,19 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderFiltersEnum;
 use App\Http\Resources\OrderResource;
-use DB;
-use Stripe\Stripe;
-use App\Models\Cart;
-use App\Models\User;
-use App\Models\Order;
-use App\Models\TimeSlots;
-use App\Models\OrderPayment;
-use Illuminate\Http\Request;
-use App\Models\Doctor\Doctor;
-use App\Models\OrderServices;
-use App\Models\OrderPaymentLog;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\OrderServiceResource;
+use App\Models\Cart\Cart;
+use App\Models\Doctor\Doctor;
+use App\Models\Order\Order;
+use App\Models\Order\OrderPayment;
+use App\Models\Order\OrderPaymentLog;
+use App\Models\Order\OrderServices;
+use App\Models\TimeSlots;
+use App\Models\User\User;
+use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Stripe\Stripe;
 
 class OrderController extends Controller
 {
@@ -241,7 +241,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Get Order/s by filter 
+     * Get Order/s by filter
      * @param Request $request {required filter [string] | session_id | order_id | doctor_id | user_id}
      * @return mixed|\Illuminate\Http\JsonResponse
      */
@@ -349,7 +349,7 @@ class OrderController extends Controller
     {
         //Searching by session_id
         $orderPayment = OrderPayment::where(column: 'session_id', operator: $session_id)->first();
-        //Get orderInfo 
+        //Get orderInfo
         if ($orderPayment) {
             $order = Order::find($orderPayment->order_id);
             $orderServices = OrderServices::where('order_id', $order->id)->get();

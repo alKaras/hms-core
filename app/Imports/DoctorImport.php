@@ -2,14 +2,14 @@
 
 namespace App\Imports;
 
-use App\Models\Role;
-use App\Models\User;
-use Illuminate\Support\Str;
-use App\Models\Doctor\Doctor;
 use App\Models\Department\Department;
+use App\Models\Doctor\Doctor;
+use App\Models\Role;
+use App\Models\User\User;
+use App\Notifications\DoctorCredentialsNotification;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use App\Notifications\DoctorCredentialsNotification;
 
 class DoctorImport implements ToModel, WithHeadingRow
 {

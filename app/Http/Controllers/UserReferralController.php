@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\HServices;
-use App\Models\UserReferral;
-use Illuminate\Http\Request;
-use App\Models\Department\Department;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\UserReferralResource;
+use App\Models\HServices;
+use App\Models\User\User;
+use App\Models\User\UserReferral;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class UserReferralController extends Controller
 {

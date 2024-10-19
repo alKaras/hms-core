@@ -3,7 +3,7 @@
 namespace App\Customs\Services;
 
 use App\Models\EmailVerificationToken;
-use App\Models\User;
+use App\Models\User\User;
 use App\Notifications\EmailVerificationNotification;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;

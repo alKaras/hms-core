@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Events\OrderExpired;
-use App\Models\Order;
+use App\Models\Order\Order;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 

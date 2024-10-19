@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Imports\DoctorImport;
-use App\Models\HServices;
-use App\Notifications\DoctorCredentialsNotification;
-use Validator;
-use App\Models\Role;
-use App\Models\User;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Models\Doctor\Doctor;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Department\Department;
 use App\Http\Resources\DoctorResource;
-use Illuminate\Validation\Rules\Password;
+use App\Imports\DoctorImport;
+use App\Models\Department\Department;
+use App\Models\Doctor\Doctor;
+use App\Models\HServices;
+use App\Models\Role;
+use App\Models\User\User;
+use App\Notifications\DoctorCredentialsNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use Validator;
 
 class DoctorController extends Controller
 {
