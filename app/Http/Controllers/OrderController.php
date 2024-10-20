@@ -13,6 +13,7 @@ use App\Models\Order\OrderPaymentLog;
 use App\Models\Order\OrderServices;
 use App\Models\TimeSlots;
 use App\Models\User\User;
+use App\Notifications\TimeSlotConfirmationNotification;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -441,6 +442,25 @@ class OrderController extends Controller
                 'status' => 'error',
                 'message' => 'There is no orders for provided user'
             ], 404);
+        }
+    }
+
+    public function sendOrderConfirmationMail(Request $request)
+    {
+        $order = Order::find($request->order_id);
+
+        if ($order) {
+            $user = User::find($order->user->id);
+            $timeSlots = $order->orderServices->map(function ($orderService) {
+                return $orderService->timeSlot; // Map each service to its associated time slot
+            });
+
+            $user->notify(new TimeSlotConfirmationNotification($timeSlots));
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'There is no data for provided orderId'
+            ]);
         }
     }
 }

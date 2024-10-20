@@ -44,7 +44,8 @@ class DoctorCredentialsNotification extends Notification
             ->line("Here are your credentials:")
             ->line("Email: " . $this->email)
             ->line("Password: " . $this->password)
-            ->line("Please keep this information secure.");
+            ->line("Please keep this information secure.")
+            ->salutation('З повагою, команда HMS');
     }
 
     /**
