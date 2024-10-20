@@ -61,7 +61,7 @@
         }
 
         th {
-            background-color: #4CAF50;
+            background-color: dodgerblue;
             color: white;
         }
 
@@ -88,6 +88,11 @@
         <h2>Загальна інформація</h2>
         <p><strong>Послуга: </strong> {{ $details['service']['name'] }}</p>
         <p><strong>Орієнтований час початку: </strong> {{ date('d/m/Y H:i', strtotime($details['start_time'])) }}</p>
+        <p><strong>Лікарня: </strong>
+            {{ $details['hospital']['title'] ?? null }}
+            {{$details['hospital']['address'] ?? null}}
+        </p>
+        <p><strong>Телефон лікарні: </strong> {{ $details['hospital']['title'] ?? null }}</p>
         </p>
     </div>
 

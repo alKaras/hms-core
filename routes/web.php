@@ -19,4 +19,4 @@ Route::get('/', function () {
 });
 
 Route::get('/verification', [\App\Http\Controllers\Api\Auth\AuthController::class, 'showVerificationPage']);
-Route::get('/timeslot/{id}/download-timeslot', [TimeSlotsController::class, 'generatePdf']);
+Route::get('/api/timeslot/{id}/download-timeslot', [TimeSlotsController::class, 'generatePdf']);
