@@ -33,6 +33,15 @@ class HServices extends Model
         return $this->belongsToMany(Hospital::class, 'hospital_services', 'service_id', 'hospital_id');
     }
 
+    /**
+     * Get first hospitalId for picked service
+     * @return mixed
+     */
+    public function getPrimaryHospital()
+    {
+        return $this->hospitals()->first();
+    }
+
     public function doctors()
     {
         return $this->belongsToMany(Doctor::class, 'doctor_services', 'service_id', 'doctor_id');

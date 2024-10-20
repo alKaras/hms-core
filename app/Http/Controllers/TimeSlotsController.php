@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade as PDF;
 use Validator;
 use Carbon\Carbon;
 use App\Models\HServices;
@@ -281,6 +282,27 @@ class TimeSlotsController extends Controller
         ]);
 
         return new TimeSlotsResource($timeSlot);
+    }
+
+    /**
+     * Generate Pdf of timeslot
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     */
+    public function generatePdf($id)
+    {
+        $timeSlot = TimeSlots::find($id);
+        if ($timeSlot) {
+            // $details = ['title' => 'test'];
+            $details = (new TimeSlotsResource($timeSlot))->toArray(request());
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.specific_timeslot', compact('details'));
+            return $pdf->download("timeslot-{$timeSlot->id}-{$timeSlot->service_id}-{$timeSlot->doctor_id}.pdf");
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => "There is no data for provided id#$id",
+            ], 404);
+        }
     }
 
     /**

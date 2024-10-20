@@ -14,6 +14,7 @@ class TimeSlotsResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $hospital = $this->service->getPrimaryHospital();
         return [
             'id' => $this->id,
             'service' => [
@@ -27,6 +28,13 @@ class TimeSlotsResource extends JsonResource
                 'surname' => $this->doctor->user->surname,
                 'email' => $this->doctor->user->email,
             ],
+            'hospital' => $hospital ? [
+                'id' => $hospital->id,
+                'title' => $hospital->content->title,
+                'address' => $hospital->content->address,
+                'public_phone' => $hospital->hospital_phone,
+                'public_email' => $hospital->hospital_email,
+            ] : null,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'price' => $this->price,
