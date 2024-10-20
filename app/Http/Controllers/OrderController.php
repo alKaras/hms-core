@@ -171,8 +171,12 @@ class OrderController extends Controller
                         'payment_id' => $session->payment_intent,
                         'updated_at' => now(),
                     ]);
+                    $user = User::find($order->user->id);
+
+                    //Send notification to the User email
+                    $this->sendOrderConfirmationNotification($user, $order);
                 }
-                //Send notification to the User email
+
                 break;
 
             default:
@@ -451,16 +455,25 @@ class OrderController extends Controller
 
         if ($order) {
             $user = User::find($order->user->id);
-            $timeSlots = $order->orderServices->map(function ($orderService) {
-                return $orderService->timeSlot; // Map each service to its associated time slot
-            });
-
-            $user->notify(new TimeSlotConfirmationNotification($timeSlots));
+            $this->sendOrderConfirmationNotification($user, $order);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order confirmation sent successfully.'
+            ]);
         } else {
             return response()->json([
                 'status' => 'error',
                 'message' => 'There is no data for provided orderId'
             ]);
         }
+    }
+
+    protected function sendOrderConfirmationNotification(User $user, Order $order)
+    {
+        $timeSlots = $order->orderServices->map(function ($orderService) {
+            return $orderService->timeSlot; // Map each service to its associated time slot
+        });
+
+        $user->notify(new TimeSlotConfirmationNotification($timeSlots));
     }
 }
