@@ -7,6 +7,7 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderServiceResource;
 use App\Models\Cart\Cart;
 use App\Models\Doctor\Doctor;
+use App\Models\Hospital\Hospital;
 use App\Models\Order\Order;
 use App\Models\Order\OrderPayment;
 use App\Models\Order\OrderPaymentLog;
@@ -188,6 +189,30 @@ class OrderController extends Controller
     }
 
     /**
+     * Send confirmation email for order
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function sendOrderConfirmationMail(Request $request)
+    {
+        $order = Order::find($request->order_id);
+
+        if ($order) {
+            $user = User::find($order->user->id);
+            $this->sendOrderConfirmationNotification($user, $order);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order confirmation sent successfully.'
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'There is no data for provided orderId'
+            ]);
+        }
+    }
+
+    /**
      * Cancel order method | Cancel order when user navigate to checkout/payment/cancel
      */
     public function cancel(Request $request)
@@ -258,7 +283,8 @@ class OrderController extends Controller
             'session_id' => ['exists:order_payments,session_id'],
             'order_id' => ['exists:orders,id'],
             'doctor_id' => ['exists:doctors,id'],
-            'user_id' => ['exists:users,id']
+            'user_id' => ['exists:users,id'],
+            'hospital_id' => ['exists:hospital,id'],
         ]);
 
         if ($validator->fails()) {
@@ -274,6 +300,7 @@ class OrderController extends Controller
         $orderId = $request->input('order_id') ?? null;
         $doctorId = $request->input('doctor_id') ?? null;
         $userId = $request->input('user_id') ?? null;
+        $hospitalId = $request->input('hospital_id') ?? null;
 
         switch ($filterEnum) {
             case OrderFiltersEnum::OrdersById:
@@ -313,6 +340,16 @@ class OrderController extends Controller
                     return response()->json([
                         'status' => 'error',
                         'message' => 'UserId is required for this filter'
+                    ], 500);
+                }
+
+            case OrderFiltersEnum::OrdersByHospital:
+                if ($hospitalId !== null) {
+                    return $this->responseByHospitalId($hospitalId);
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'HospitalId is required for this filter'
                     ], 500);
                 }
 
@@ -425,7 +462,7 @@ class OrderController extends Controller
      * @param mixed $limit
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function responseByUserId($user_id, $limit = null)
+    private function responseByUserId($user_id, $limit = null)
     {
         $query = Order::where('user_id', '=', $user_id);
         $orders = $limit ? $query->limit($limit)->get() : $query->get();
@@ -449,25 +486,62 @@ class OrderController extends Controller
         }
     }
 
-    public function sendOrderConfirmationMail(Request $request)
+    /**
+     * Responder for filtering orders by hospital id
+     * @param mixed $hospitalId
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    private function responseByHospitalId($hospitalId)
     {
-        $order = Order::find($request->order_id);
+        $hospital = Hospital::find($hospitalId);
+        if ($hospital) {
+            $hospitalOrders = DB::table('orders as o')
+                ->leftJoin('order_payments as op', 'op.order_id', '=', 'o.id')
+                ->leftJoin('order_payment_logs as opl', 'opl.order_payment_id', '=', 'op.id')
+                ->leftJoin('order_status_ref as osr', 'osr.id', '=', 'o.status')
+                ->leftJoin('order_services as os', 'os.order_id', '=', 'o.id')
+                ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
+                ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
+                ->leftJoin('department_content as dc', 'dc.department_id', '=', 's.department_id')
+                ->leftJoin('hospital_departments as hd', 'hd.department_id', '=', 's.department_id')
+                ->where('o.status', 2)
+                ->where('hd.hospital_id', $hospital->id)
+                ->groupBy('o.id', 'osr.status_name', 'op.payment_id')
+                ->selectRaw("
+                o.id as orderId,
+                osr.status_name as paidStatus,
+                JSON_ARRAYAGG(JSON_OBJECT('serviceName', s.name, 'departmentTitle', dc.title, 'startTime', ts.start_time)) as services,
+                op.payment_id as paymentId
+            ")
+                ->get();
 
-        if ($order) {
-            $user = User::find($order->user->id);
-            $this->sendOrderConfirmationNotification($user, $order);
             return response()->json([
                 'status' => 'success',
-                'message' => 'Order confirmation sent successfully.'
+                'data' => collect($hospitalOrders)->map(function ($order) {
+                    return [
+                        'id' => $order->orderId,
+                        'paid_status' => $order->paidStatus,
+                        'payment_id' => $order->paymentId,
+                        'serviceData' => json_decode($order->services, true),
+                    ];
+                })
             ]);
+
         } else {
             return response()->json([
                 'status' => 'error',
-                'message' => 'There is no data for provided orderId'
-            ]);
+                'message' => "No data for provided doctor_id #{$hospitalId}"
+            ], 404);
         }
     }
 
+
+    /**
+     * Send Order Confirmation notification method
+     * @param \App\Models\User\User $user
+     * @param \App\Models\Order\Order $order
+     * @return void
+     */
     protected function sendOrderConfirmationNotification(User $user, Order $order)
     {
         $timeSlots = $order->orderServices->map(function ($orderService) {
