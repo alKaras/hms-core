@@ -36,6 +36,16 @@ class UserController extends Controller
                     'hospitalId' => $hospitalId->id ?? null,
                 ]
             ]);
+        } else if ($highestPriorityRole === 'manager') {
+            $hospitalId = Hospital::find($user->hospital_id) ?? 0;
+            return response()->json([
+                'user' => [
+                    'data' => $user,
+                    'roles' => $highestPriorityRole,
+                    'id' => $user->id,
+                    'hospitalId' => $hospitalId->id ?? null,
+                ]
+            ]);
         } else {
             return response()->json([
                 'user' => [

@@ -63,12 +63,9 @@ class HServicesController extends Controller
             'data' => $doctor->services->map(function ($service) {
                 return [
                     "id" => $service->id,
-                    "name" => $service->name,
+                    "service_name" => $service->name,
                     "description" => $service->description,
-                    "department" => [
-                        "id" => $service->department->id,
-                        "title" => $service->department->content->title,
-                    ]
+                    "department" => $service->department->content->title
                 ];
             })
         ]);

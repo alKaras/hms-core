@@ -4,6 +4,7 @@ namespace App\Models\Hospital;
 
 use App\Models\Department\Department;
 use App\Models\HServices;
+use App\Models\User\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -31,5 +32,10 @@ class Hospital extends Model
     public function services()
     {
         return $this->belongsToMany(HServices::class, 'hospital_services', 'hospital_id', 'service_id');
+    }
+
+    public function managers()
+    {
+        return $this->hasMany(User::class);
     }
 }

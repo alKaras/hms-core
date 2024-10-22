@@ -3,14 +3,15 @@
 namespace App\Models\User;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\Doctor\Doctor;
-use App\Models\EmailVerificationToken;
 use App\Models\Role;
+use App\Models\Doctor\Doctor;
+use App\Models\Hospital\Hospital;
+use Laravel\Sanctum\HasApiTokens;
+use App\Models\EmailVerificationToken;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -31,6 +32,7 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'active',
         'stripe_customer_id',
+        'hospital_id',
     ];
 
     /**
@@ -97,5 +99,14 @@ class User extends Authenticatable implements JWTSubject
     public function referral()
     {
         return $this->hasMany(UserReferral::class);
+    }
+
+    /**
+     * Hospital reference
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function hospital()
+    {
+        return $this->hasOne(Hospital::class);
     }
 }
