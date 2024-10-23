@@ -19,7 +19,8 @@ class HospitalReviewController extends Controller
     public function index(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'hospital_id' => ['required', 'exists:hospital,id']
+            'hospital_id' => ['required', 'exists:hospital,id'],
+            'limit' => ['numeric'],
         ]);
 
         if ($validator->fails()) {
@@ -30,7 +31,18 @@ class HospitalReviewController extends Controller
             ], 422);
         }
 
-        $hospitalReview = HospitalReview::where('hospital_id', $request->hospital_id)->get();
+        if ($request->limit) {
+            $hospitalReview = HospitalReview::where('hospital_id', $request->hospital_id)
+                ->limit($request->limit)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $hospitalReview = HospitalReview::where('hospital_id', $request->hospital_id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+
 
         return HospitalReviewResource::collection($hospitalReview);
     }
