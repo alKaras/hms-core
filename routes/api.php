@@ -55,6 +55,8 @@ Route::prefix('hospital')->group(function () {
 
     Route::post('/fetch/services', [HospitalController::class, 'showHospitalServices']);
 
+    Route::post('/rating', [HospitalController::class, 'getAverageRatingForSpecificHospital']);
+
     Route::post('create', [HospitalController::class, 'store']);
     Route::put('edit/{id}', [HospitalController::class, 'update']);
     Route::delete('delete/{id}', [HospitalController::class, 'destroy']);
@@ -140,6 +142,7 @@ Route::prefix('/timeslots')->group(function () {
  */
 Route::prefix('/hospital/reviews')->group(function () {
     Route::post('/get', [HospitalReviewController::class, 'index']);
+    Route::post('/getcount', [HospitalReviewController::class, 'getAmountOfReviewsByHospital']);
 });
 
 Route::prefix('/hospital/reviews')->middleware(['jwt.auth'])->group(function () {

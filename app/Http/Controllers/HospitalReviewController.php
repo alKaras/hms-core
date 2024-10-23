@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\HospitalReviewResource;
-use App\Models\HospitalReview;
-use Illuminate\Http\Request;
 use Validator;
+use Illuminate\Http\Request;
+use App\Models\HospitalReview;
+use App\Models\Hospital\Hospital;
+use Illuminate\Support\Facades\DB;
+use App\Http\Resources\HospitalReviewResource;
 
 class HospitalReviewController extends Controller
 {
@@ -73,6 +75,30 @@ class HospitalReviewController extends Controller
             ]);
         } else {
             return [];
+        }
+    }
+
+
+    /**
+     * Amount of reviews by specific hospital Id
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getAmountOfReviewsByHospital(Request $request)
+    {
+        $hospital = Hospital::find($request->hospital_id);
+        if ($hospital) {
+            $countReviews = HospitalReview::where('hospital_id', $hospital->id)->count();
+
+            return response()->json([
+                'status' => 'success',
+                'countReviews' => $countReviews
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => "There is no data for provided id#{$request->hospital_id}"
+            ], 404);
         }
     }
 
