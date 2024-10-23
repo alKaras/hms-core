@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use DB;
 use Illuminate\Http\Request;
+use App\Models\HospitalReview;
 use App\Models\Hospital\Hospital;
 use App\Http\Resources\HospitalResource;
 use Illuminate\Support\Facades\Validator;
@@ -284,6 +285,31 @@ class HospitalController extends Controller
         $hospital->load('content');
 
         return new HospitalResource($hospital);
+    }
+
+    /**
+     * Average rating for specific hospital
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getAverageRatingForSpecificHospital(Request $request)
+    {
+        $hospital = Hospital::find($request->hospital_id);
+        if ($hospital) {
+            $averageRating = HospitalReview::where('hospital_id', $hospital->id)
+                ->select(DB::raw('ROUND(AVG(rating), 0) as avg_rating'))
+                ->value('avg_rating');
+
+            return response()->json([
+                'status' => 'success',
+                'avgRating' => $averageRating
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => "There is no data for provided id#{$request->hospital_id}"
+            ], 404);
+        }
     }
 
     /**

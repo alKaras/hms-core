@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HospitalReviewController;
 use App\Http\Controllers\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +54,8 @@ Route::prefix('hospital')->group(function () {
     Route::post('/fetch/doctors', [HospitalController::class, 'fetchDepartmentDoctors']);
 
     Route::post('/fetch/services', [HospitalController::class, 'showHospitalServices']);
+
+    Route::post('/rating', [HospitalController::class, 'getAverageRatingForSpecificHospital']);
 
     Route::post('create', [HospitalController::class, 'store']);
     Route::put('edit/{id}', [HospitalController::class, 'update']);
@@ -132,4 +135,17 @@ Route::prefix('/timeslots')->group(function () {
     Route::post('/create', [TimeSlotsController::class, 'store']);
     Route::put('/{id}/edit', [TimeSlotsController::class, 'update']);
     Route::delete('/{id}/destroy', [TimeSlotsController::class, 'destroy']);
+});
+
+/**
+ * Hospital Reviews routes api/hospital/reviews
+ */
+Route::prefix('/hospital/reviews')->group(function () {
+    Route::post('/get', [HospitalReviewController::class, 'index']);
+    Route::post('/getcount', [HospitalReviewController::class, 'getAmountOfReviewsByHospital']);
+});
+
+Route::prefix('/hospital/reviews')->middleware(['jwt.auth'])->group(function () {
+    Route::post('/create', [HospitalReviewController::class, 'store']);
+    Route::delete('/item/{id}/remove', [HospitalReviewController::class, 'destroy']);
 });

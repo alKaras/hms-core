@@ -3,6 +3,7 @@
 namespace App\Models\Hospital;
 
 use App\Models\Department\Department;
+use App\Models\HospitalReview;
 use App\Models\HServices;
 use App\Models\User\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,5 +38,10 @@ class Hospital extends Model
     public function managers()
     {
         return $this->hasMany(User::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(HospitalReview::class);
     }
 }
