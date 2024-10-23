@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HospitalReviewController;
 use App\Http\Controllers\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -132,4 +133,16 @@ Route::prefix('/timeslots')->group(function () {
     Route::post('/create', [TimeSlotsController::class, 'store']);
     Route::put('/{id}/edit', [TimeSlotsController::class, 'update']);
     Route::delete('/{id}/destroy', [TimeSlotsController::class, 'destroy']);
+});
+
+/**
+ * Hospital Reviews routes api/hospital/reviews
+ */
+Route::prefix('/hospital/reviews')->group(function () {
+    Route::post('/get', [HospitalReviewController::class, 'index']);
+});
+
+Route::prefix('/hospital/reviews')->middleware(['jwt.auth'])->group(function () {
+    Route::post('/create', [HospitalReviewController::class, 'store']);
+    Route::delete('/item/{id}/remove', [HospitalReviewController::class, 'destroy']);
 });

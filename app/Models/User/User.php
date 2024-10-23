@@ -3,6 +3,7 @@
 namespace App\Models\User;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\HospitalReview;
 use App\Models\Role;
 use App\Models\Doctor\Doctor;
 use App\Models\Hospital\Hospital;
@@ -108,5 +109,10 @@ class User extends Authenticatable implements JWTSubject
     public function hospital()
     {
         return $this->hasOne(Hospital::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(HospitalReview::class);
     }
 }
