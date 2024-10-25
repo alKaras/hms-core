@@ -10,16 +10,12 @@ use Illuminate\Notifications\Notification;
 class DoctorCredentialsNotification extends Notification
 {
     use Queueable;
-    protected $email;
-    protected $password;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($email, $password)
+    public function __construct(protected $email, protected $password)
     {
-        $this->email = $email;
-        $this->password = $password;
     }
 
     /**

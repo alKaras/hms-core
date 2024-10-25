@@ -10,14 +10,12 @@ use Illuminate\Notifications\Notification;
 class EmailVerificationNotification extends Notification
 {
     use Queueable;
-    protected $url;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($url)
+    public function __construct(protected $url)
     {
-        $this->url = $url;
     }
 
     /**

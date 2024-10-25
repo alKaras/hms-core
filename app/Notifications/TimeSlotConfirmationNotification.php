@@ -13,14 +13,11 @@ class TimeSlotConfirmationNotification extends Notification
 {
     use Queueable;
 
-    protected $timeslots;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct($timeSlots)
+    public function __construct(protected $timeSlots)
     {
-        $this->timeslots = $timeSlots;
     }
 
     /**
