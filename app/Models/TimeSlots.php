@@ -16,7 +16,8 @@ class TimeSlots extends Model
         'service_id',
         'start_time',
         'end_time',
-        'price'
+        'price',
+        'state'
     ];
 
     protected $table = 'time_slots';

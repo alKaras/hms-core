@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->timestamp('start_time');
             $table->timestamp('end_time');
             $table->double('price', 10, 2);
+            $table->integer('state')->default(1); //state to check whether timeslot reserved, sold or free
             $table->timestamps();
 
             $table->foreign('doctor_id')->references('id')->on('doctors');
