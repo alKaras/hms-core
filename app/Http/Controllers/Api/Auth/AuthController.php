@@ -86,7 +86,7 @@ class AuthController extends Controller
         $customer = Customer::create([
             'email' => $request->email,
             'phone' => $request->phone,
-            'name' => $request->name . ' ' . $request->surname,
+            'name' => "{$request->name} {$request->surname}",
         ]);
 
         $user = User::create([

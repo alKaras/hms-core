@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TimeslotStateEnum;
 use Barryvdh\DomPDF\Facade as PDF;
 use Validator;
 use Carbon\Carbon;
@@ -46,6 +47,7 @@ class TimeSlotsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'doctor_id' => ['required', 'exists:doctors,id'],
+            'freeOnly' => ['numeric']
         ]);
 
         if ($validator->fails()) {
@@ -55,6 +57,7 @@ class TimeSlotsController extends Controller
                 'errors' => $validator->errors(),
             ], 422);
         }
+        $freeOnly = $request->input('freeOnly');
 
         $doctor = Doctor::find($request->doctor_id);
         if (!$doctor) {
@@ -65,11 +68,26 @@ class TimeSlotsController extends Controller
         }
 
         $doctorTimeslots = TimeSlots::with('doctor.user')->where('doctor_id', $doctor->id)->get();
+        if ($freeOnly) {
+            $timeslotsFiltered = $doctorTimeslots->filter(function ($timeSlots) {
+                return $timeSlots->state == TimeslotStateEnum::FREE;
+            });
+
+
+            if (!empty($timeslotsFiltered)) {
+                return TimeSlotsResource::collection($timeslotsFiltered);
+            }
+            return response()->json([
+                'data' => []
+            ], 404);
+        }
+
         if (empty($doctorTimeslots)) {
             return response()->json([
                 'data' => []
-            ]);
+            ], 404);
         }
+
         return TimeSlotsResource::collection($doctorTimeslots);
 
     }
@@ -83,6 +101,7 @@ class TimeSlotsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'service_id' => ['required', 'exists:services,id'],
+            'freeOnly' => 'numeric'
         ]);
 
         if ($validator->fails()) {
@@ -93,11 +112,24 @@ class TimeSlotsController extends Controller
             ]);
         }
 
+        $freeOnly = $request->input('freeOnly');
         $serviceTimeSlots = TimeSlots::with('service')->where('service_id', $request->service_id)->get();
+
+        if ($freeOnly) {
+            $serviceSlotsFiltered = $serviceTimeSlots->filter(function ($timeSlots) {
+                return $timeSlots->state == TimeslotStateEnum::FREE;
+            });
+
+            if (!empty($serviceSlotsFiltered)) {
+                return TimeSlotsResource::collection($serviceSlotsFiltered);
+            }
+            return response()->json(['data' => [], 404]);
+        }
+
         if (empty($serviceTimeSlots)) {
             return response()->json([
                 'data' => []
-            ]);
+            ], 404);
         }
         return TimeSlotsResource::collection($serviceTimeSlots);
     }
@@ -112,7 +144,8 @@ class TimeSlotsController extends Controller
         $validator = Validator::make($request->all(), [
             'date' => ['required', 'date_format:Y-m-d'],
             'service_id' => ['exists:services,id'],
-            'doctor_id' => ['exists:doctors,id']
+            'doctor_id' => ['exists:doctors,id'],
+            'freeOnly' => ['numeric'],
         ]);
 
         if ($validator->fails()) {
@@ -127,6 +160,7 @@ class TimeSlotsController extends Controller
         $service = HServices::find($request->input('service_id'));
         $doctor = Doctor::find($request->input('doctor_id'));
         $timeslots = TimeSlots::byDate($date)->get();
+        $freeOnly = $request->input('freeOnly');
 
         if ($timeslots->isEmpty()) {
             return response()->json([
@@ -138,12 +172,45 @@ class TimeSlotsController extends Controller
         if (null !== $service) {
             $serviceTimeSlots = $timeslots->filter(fn($timeslot) => $timeslot->service_id == $service->id);
 
+            if ($freeOnly) {
+                $filteredServicesSlots = $serviceTimeSlots->filter(fn($timeslot) => $timeslot->state === TimeslotStateEnum::FREE);
+
+                if (!empty($filteredServicesSlots)) {
+                    return response()->json([
+                        'status' => 'success',
+                        'data' => TimeSlotsResource::collection($filteredServicesSlots)
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => 'failure',
+                        'data' => []
+                    ], 404);
+                }
+            }
+
             return response()->json([
                 'status' => 'success',
                 'data' => TimeSlotsResource::collection($serviceTimeSlots),
             ]);
         } elseif (null !== $doctor) {
             $doctorTimeSlots = $timeslots->filter(fn($timeslot) => $doctor->id == $timeslot->doctor_id);
+
+            if ($freeOnly) {
+                $filteredDoctorSlots = $doctorTimeSlots->filter(fn($timeslot) => $timeslot->state === TimeslotStateEnum::FREE);
+
+                if (!empty($filteredDoctorSlots)) {
+                    return response()->json([
+                        'status' => 'success',
+                        'data' => TimeSlotsResource::collection($filteredDoctorSlots),
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => 'failure',
+                        'data' => [],
+                    ], 404);
+                }
+            }
+
             return response()->json([
                 'status' => 'success',
                 'data' => TimeSlotsResource::collection($doctorTimeSlots),

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TimeslotStateEnum;
 use App\Models\Cart\CartItems;
 use App\Models\Doctor\Doctor;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,6 +22,10 @@ class TimeSlots extends Model
     ];
 
     protected $table = 'time_slots';
+
+    protected $casts = [
+        'state' => TimeslotStateEnum::class,
+    ];
 
     public function doctor()
     {

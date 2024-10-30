@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TimeslotStateEnum;
 use App\Models\Cart\Cart;
 use App\Models\Cart\CartItems;
 use App\Models\TimeSlots;
@@ -29,12 +30,18 @@ class CartController extends Controller
                 $timeSlot = TimeSlots::find($request->time_slot_id);
                 if (!$timeSlot) {
                     return response()->json(['message' => 'No timeslot for provided id'], 404);
+                } elseif ($timeSlot->state === TimeslotStateEnum::RESERVED || $timeSlot->state === TimeslotStateEnum::SOLD) {
+                    return response()->json(['message' => 'Cannot create shopping cart. TimeSlot is already reserved or sold'], 500);
                 }
+
 
                 $cart->items()->create([
                     'time_slot_id' => $timeSlot->id,
                     'price' => $timeSlot->price,
                 ]);
+
+                $timeSlot->state = TimeslotStateEnum::RESERVED;
+                $timeSlot->save();
 
                 return response()->json(['message' => 'Item added to cart']);
 
@@ -45,14 +52,20 @@ class CartController extends Controller
                 }
 
                 $timeSlot = TimeSlots::find($request->time_slot_id);
+
                 if (!$timeSlot) {
                     return response()->json(['message' => 'No timeslot for provided id'], 404);
+                } elseif ($timeSlot->state === TimeslotStateEnum::RESERVED || $timeSlot->state === TimeslotStateEnum::SOLD) {
+                    return response()->json(['message' => 'Cannot create shopping cart. TimeSlot is already reserved or sold'], 500);
                 }
 
                 $cart->items()->create([
                     'time_slot_id' => $timeSlot->id,
                     'price' => $timeSlot->price,
                 ]);
+
+                $timeSlot->state = TimeslotStateEnum::RESERVED;
+                $timeSlot->save();
 
                 return response()->json(['message' => 'Item added to cart']);
             }
@@ -90,6 +103,7 @@ class CartController extends Controller
                         'name' => TimeSlots::find($item->time_slot_id)->service->name,
                         'department' => TimeSlots::find($item->time_slot_id)->service->department->content->title,
                         'start_time' => TimeSlots::find($item->time_slot_id)->start_time,
+                        'state' => TimeSlots::find($item->time_slot_id)->state,
                     ],
                     'price' => $item->price,
                 ];
@@ -101,12 +115,16 @@ class CartController extends Controller
     public function removeItem($itemId)
     {
         $cartItem = CartItems::find($itemId);
+        $timeSlot = TimeSlots::find($cartItem->time_slot_id);
 
         if (!$cartItem) {
             return response()->json(['message' => 'Item not found in the cart'], 404);
         }
 
         $cartItem->delete();
+
+        $timeSlot->state = TimeslotStateEnum::FREE;
+        $timeSlot->save();
         return response()->json(['message' => 'Item removed successfully']);
     }
 
@@ -116,6 +134,17 @@ class CartController extends Controller
         if (!$cart) {
             return response()->json(['message' => 'Cart is not found'], 404);
         }
+
+        foreach ($cart->items as $item) {
+            $timeSlot = TimeSlots::find($item->time_slot_id);
+
+            if ($timeSlot) {
+                $timeSlot->state = TimeslotStateEnum::FREE;
+                $timeSlot->save();
+            }
+
+        }
+
 
         $cart->items()->delete();
         $cart->delete();
