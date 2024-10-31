@@ -2,9 +2,11 @@
 
 namespace App\Console\Commands;
 
-use App\Events\OrderExpired;
-use App\Models\Order\Order;
+use App\Enums\TimeslotStateEnum;
 use Carbon\Carbon;
+use App\Models\TimeSlots;
+use App\Models\Order\Order;
+use App\Events\OrderExpired;
 use Illuminate\Console\Command;
 
 class CheckExpiredOrders extends Command
@@ -41,6 +43,15 @@ class CheckExpiredOrders extends Command
                 'status' => 3,
                 'cancel_reason' => 'Order Expired',
             ]);
+
+            foreach ($order->orderServices as $service) {
+                $timeSlot = TimeSlots::find($service->time_slot_id);
+
+                if ($timeSlot) {
+                    $timeSlot->state = TimeslotStateEnum::FREE;
+                    $timeSlot->save();
+                }
+            }
 
             $order->orderServices()->update([
                 'is_canceled' => 1,

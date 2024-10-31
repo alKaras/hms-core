@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use Carbon\Carbon;
+use App\Enums\TimeslotStateEnum;
 use Closure;
+use Carbon\Carbon;
+use App\Models\TimeSlots;
 use App\Models\Order\Order;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,6 +30,15 @@ class OrderExpiration
                 'status' => 3,
                 'cancel_reason' => 'Order Expired',
             ]);
+
+            foreach ($order->orderServices as $service) {
+                $timeSlot = TimeSlots::find($service->time_slot_id);
+                if ($timeSlot) {
+                    $timeSlot->state = TimeslotStateEnum::FREE;
+                    $timeSlot->save();
+                }
+            }
+
             $order->orderServices()->update([
                 'is_canceled' => 1,
             ]);

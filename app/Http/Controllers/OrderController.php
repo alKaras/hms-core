@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderFiltersEnum;
+use App\Enums\TimeslotStateEnum;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderServiceResource;
 use App\Models\Cart\Cart;
@@ -116,6 +117,8 @@ class OrderController extends Controller
                 'updated_at' => now(),
             ]);
 
+            $this->changeOrderServicesTimeslotsState($order, TimeslotStateEnum::SOLD);
+
             return response()->json([
                 'status' => 'success',
                 'success_url' => env("REACT_APP_URL") . "/checkout/payment/success?order_id={$order->id}",
@@ -161,6 +164,8 @@ class OrderController extends Controller
                         'confirmed_at' => now(),
                         'updated_at' => now(),
                     ]);
+
+                    $this->changeOrderServicesTimeslotsState($order, TimeslotStateEnum::SOLD);
 
                     OrderPaymentLog::create([
                         'order_payment_id' => $orderPayment->id,
@@ -236,6 +241,8 @@ class OrderController extends Controller
                 'is_canceled' => 1,
                 'updated_at' => now(),
             ]);
+
+            $this->changeOrderServicesTimeslotsState($order, TimeslotStateEnum::FREE);
 
             $orderPayment->paymentLogs()->create([
                 'order_payment_id' => $orderPayment->id,
@@ -549,5 +556,17 @@ class OrderController extends Controller
         });
 
         $user->notify(new TimeSlotConfirmationNotification($timeSlots));
+    }
+
+    private function changeOrderServicesTimeslotsState(Order $order, TimeslotStateEnum $status): void
+    {
+        foreach ($order->orderServices as $service) {
+            $timeSlot = TimeSlots::find($service->time_slot_id);
+
+            if ($timeSlot) {
+                $timeSlot->state = $status;
+                $timeSlot->save();
+            }
+        }
     }
 }
