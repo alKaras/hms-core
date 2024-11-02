@@ -294,6 +294,10 @@ class OrderController extends Controller
             'hospital_id' => ['exists:hospital,id'],
         ]);
 
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $onlySold = (bool) $request->input('onlySold', default: 0);
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -342,7 +346,7 @@ class OrderController extends Controller
 
             case OrderFiltersEnum::OrdersbyUser:
                 if ($userId !== null) {
-                    return $this->responseByUserId($userId, $limit);
+                    return $this->responseByUserId($userId, $limit, $perPage, $page, $onlySold);
                 } else {
                     return response()->json([
                         'status' => 'error',
@@ -352,7 +356,7 @@ class OrderController extends Controller
 
             case OrderFiltersEnum::OrdersByHospital:
                 if ($hospitalId !== null) {
-                    return $this->responseByHospitalId($hospitalId);
+                    return $this->responseByHospitalId($hospitalId, $perPage, $page);
                 } else {
                     return response()->json([
                         'status' => 'error',
@@ -471,10 +475,12 @@ class OrderController extends Controller
      * @param mixed $limit
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    private function responseByUserId($user_id, $limit = null)
+    private function responseByUserId($user_id, $limit = null, $perPage, $page, $onlySold = false)
     {
-        $query = Order::where('user_id', '=', $user_id);
-        $orders = $limit ? $query->limit($limit)->get() : $query->get();
+        $query = $onlySold ? Order::where('user_id', '=', $user_id)->where('status', '=', '2')
+            :
+            Order::where('user_id', '=', $user_id);
+        $orders = $limit ? $query->limit($limit)->get() : $query->paginate($perPage);
 
         if (!empty($orders)) {
             return response()->json([
@@ -485,7 +491,19 @@ class OrderController extends Controller
                         'order' => new OrderResource($order),
                         'services' => OrderServiceResource::collection(resource: $orderServices),
                     ];
-                })
+                }),
+                'meta' => [
+                    'current_page' => $orders->currentPage(),
+                    'per_page' => $orders->perPage(),
+                    'total' => $orders->total(),
+                    'last_page' => $orders->lastPage(),
+                ],
+                'links' => [
+                    'first' => $orders->url(1),
+                    'last' => $orders->url($orders->lastPage()),
+                    'prev' => $orders->previousPageUrl(),
+                    'next' => $orders->nextPageUrl(),
+                ]
             ]);
         } else {
             return response()->json([
@@ -500,7 +518,7 @@ class OrderController extends Controller
      * @param mixed $hospitalId
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    private function responseByHospitalId($hospitalId)
+    private function responseByHospitalId($hospitalId, $perPage, $page)
     {
         $hospital = Hospital::find($hospitalId);
         if ($hospital) {
@@ -522,24 +540,40 @@ class OrderController extends Controller
                 JSON_ARRAYAGG(JSON_OBJECT('serviceName', s.name, 'departmentTitle', dc.title, 'startTime', ts.start_time)) as services,
                 op.payment_id as paymentId
             ")
-                ->get();
+                ->paginate($perPage, ["*"], "page", $page);
+            // ->get();
+
+            $hospitalOrders->getCollection()->transform(function ($order) {
+                return [
+                    'id' => $order->orderId,
+                    'paid_status' => $order->paidStatus,
+                    'payment_id' => $order->paymentId,
+                    'serviceData' => json_decode($order->services, true),
+                ];
+            });
 
             return response()->json([
                 'status' => 'success',
-                'data' => collect($hospitalOrders)->map(function ($order) {
-                    return [
-                        'id' => $order->orderId,
-                        'paid_status' => $order->paidStatus,
-                        'payment_id' => $order->paymentId,
-                        'serviceData' => json_decode($order->services, true),
-                    ];
-                })
+                'data' => $hospitalOrders->items(),
+                'meta' => [
+                    'current_page' => $hospitalOrders->currentPage(),
+                    'per_page' => $hospitalOrders->perPage(),
+                    'total' => $hospitalOrders->total(),
+                    'last_page' => $hospitalOrders->lastPage(),
+                ],
+                'links' => [
+                    'first' => $hospitalOrders->url(1),
+                    'last' => $hospitalOrders->url($hospitalOrders->lastPage()),
+                    'prev' => $hospitalOrders->previousPageUrl(),
+                    'next' => $hospitalOrders->nextPageUrl(),
+                ]
+
             ]);
 
         } else {
             return response()->json([
                 'status' => 'error',
-                'message' => "No data for provided doctor_id #{$hospitalId}"
+                'message' => "No data for provided hospitalId #{$hospitalId}"
             ], 404);
         }
     }
