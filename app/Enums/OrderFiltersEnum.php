@@ -9,4 +9,6 @@ enum OrderFiltersEnum: string
     case OrdersbyUser = "OrdersbyUser";
 
     case OrdersByHospital = "OrdersbyHospital";
+
+    case OrderOperationsFeed = "OrderOperationsFeed";
 }

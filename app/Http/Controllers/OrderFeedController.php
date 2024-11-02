@@ -61,7 +61,7 @@ class OrderFeedController extends Controller
         $doctorId = $request->input('doctor_id') ?? null;
         // $userId = $request->input('user_id') ?? null;
         $user = auth()->user();
-        $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
+        // $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
         $hospitalId = $request->input('hospital_id') ?? null;
 
         switch ($filterEnum) {
@@ -114,6 +114,9 @@ class OrderFeedController extends Controller
                         'message' => 'HospitalId is required for this filter'
                     ], 500);
                 }
+
+            case OrderFiltersEnum::OrderOperationsFeed:
+                return $this->getOrderOperationsFeed($hospitalId, $perPage, $page);
 
             default:
                 return response()->json([
@@ -329,8 +332,82 @@ class OrderFeedController extends Controller
         }
     }
 
-    private function getOrderOperationsFeed($hospitalId = null, $userId)
+    private function getOrderOperationsFeed($hospitalId = null, $perPage, $page)
     {
+        $query = DB::table('orders as o')
+            ->leftJoin('order_payments as op', 'op.order_id', '=', 'o.id')
+            ->leftJoin('order_services as os', 'o.id', '=', 'os.order_id')
+            ->leftJoin('users as u', 'u.id', '=', 'o.user_id')
+            ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
+            ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
+            ->leftJoin('hospital_services as hs', 'hs.service_id', '=', 's.id')
+            ->leftJoin('hospital_content as hc', 'hc.hospital_id', '=', 'hs.hospital_id')
+            ->when($hospitalId, function ($query) use ($hospitalId) {
+                return $query->whereNotNull('hc.hospital_id');
+            })
+            ->groupBy('o.id', 'hc.hospital_id', 'hc.title', 'clientName', 'u.phone', 'u.email', 'o.sum_total', 'o.sum_subtotal', 'o.created_at', 'o.confirmed_at', 'o.cancelled_at', 'o.cancel_reason', 'op.payment_id')
+            ->selectRaw("
+                o.id as `orderId`,
+                hc.hospital_id as `hospitalId`,
+                hc.title as `hospitalTitle`,
+                CASE 
+                    WHEN o.status = 1 THEN 'PENDING' 
+                    WHEN o.status = 2 THEN 'SOLD' 
+                    WHEN o.status = 3 THEN 'CANCELED' 
+                    ELSE '' 
+                END AS `paidStatus`,
+                CONCAT(u.name, ' ', u.surname) AS `clientName`,
+                u.phone AS `phone`,
+                u.email AS `email`,
+                COUNT(os.id) AS `serviceQuantity`,
+                o.sum_total AS `total`,
+                o.sum_subtotal AS `subtotal`,
+                o.created_at AS `dateCreated`,
+                o.confirmed_at AS `dateConfirmed`,
+                IF(o.status = 1, o.reserve_exp, NULL) AS `reserveExpiration`,
+                o.cancelled_at AS `canceledAt`,
+                o.cancel_reason AS `cancelReason`,
+                op.payment_id AS `paymentId`
+            ")
+            ->paginate($perPage, ["*"], "page", $page);
+
+        $query->getCollection()->transform(function ($order) {
+            return [
+                'orderId' => $order->orderId,
+                'hospital_id' => $order->hospitalId,
+                'hospital_title' => $order->hospitalTitle,
+                'client_name' => $order->clientName,
+                'client_phone' => $order->phone,
+                'client_email' => $order->email,
+                'service_quantity' => $order->serviceQuantity,
+                'paid_total' => $order->total,
+                'paid_subtotal' => $order->subtotal,
+                'date_created' => $order->dateCreated,
+                'date_confirmed' => $order->dateConfirmed,
+                'paid_status' => $order->paidStatus,
+                'payment_id' => $order->paymentId,
+                'reserve_expiration' => $order->reserveExpiration,
+                'canceled_at' => $order->canceledAt,
+                'cancel_reason' => $order->cancelReason,
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $query->items(),
+            'meta' => [
+                'current_page' => $query->currentPage(),
+                'per_page' => $query->perPage(),
+                'total' => $query->total(),
+                'last_page' => $query->lastPage(),
+            ],
+            'links' => [
+                'first' => $query->url(1),
+                'last' => $query->url($query->lastPage()),
+                'prev' => $query->previousPageUrl(),
+                'next' => $query->nextPageUrl(),
+            ]
+        ]);
 
     }
 }
