@@ -341,15 +341,19 @@ class OrderFeedController extends Controller
             ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
             ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
             ->leftJoin('hospital_services as hs', 'hs.service_id', '=', 's.id')
-            ->leftJoin('hospital_content as hc', 'hc.hospital_id', '=', 'hs.hospital_id')
+            ->leftJoin('hospital as h', 'h.id', '=', 'hs.hospital_id')
+            ->leftJoin('hospital_content as hc', 'hc.hospital_id', '=', 'h.id')
             ->when($hospitalId, function ($query) use ($hospitalId) {
                 return $query->whereNotNull('hc.hospital_id');
             })
-            ->groupBy('o.id', 'hc.hospital_id', 'hc.title', 'clientName', 'u.phone', 'u.email', 'o.sum_total', 'o.sum_subtotal', 'o.created_at', 'o.confirmed_at', 'o.cancelled_at', 'o.cancel_reason', 'op.payment_id')
+            ->groupBy('o.id', 'hc.hospital_id', 'hc.title', 'clientName', 'u.phone', 'u.email', 'o.sum_total', 'o.sum_subtotal', 'o.created_at', 'o.confirmed_at', 'o.cancelled_at', 'o.cancel_reason', 'op.payment_id', 'hc.address', 'h.hospital_email', 'h.hospital_phone')
             ->selectRaw("
                 o.id as `orderId`,
                 hc.hospital_id as `hospitalId`,
                 hc.title as `hospitalTitle`,
+                hc.address as `hospitalAddress`,
+                h.hospital_email as `hospitalEmail`,
+                h.hospital_phone as `hospitalPhone`,
                 CASE 
                     WHEN o.status = 1 THEN 'PENDING' 
                     WHEN o.status = 2 THEN 'SOLD' 
@@ -376,6 +380,9 @@ class OrderFeedController extends Controller
                 'orderId' => $order->orderId,
                 'hospital_id' => $order->hospitalId,
                 'hospital_title' => $order->hospitalTitle,
+                'hospital_address' => $order->hospitalAddress,
+                'hospital_email' => $order->hospitalEmail,
+                'hospital_phone' => $order->hospitalPhone,
                 'client_name' => $order->clientName,
                 'client_phone' => $order->phone,
                 'client_email' => $order->email,
