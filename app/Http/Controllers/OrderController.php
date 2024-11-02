@@ -118,6 +118,7 @@ class OrderController extends Controller
             ]);
 
             $this->changeOrderServicesTimeslotsState($order, TimeslotStateEnum::SOLD);
+            $this->sendOrderConfirmationNotification($order);
 
             return response()->json([
                 'status' => 'success',
@@ -177,10 +178,9 @@ class OrderController extends Controller
                         'payment_id' => $session->payment_intent,
                         'updated_at' => now(),
                     ]);
-                    $user = User::find($order->user->id);
 
                     //Send notification to the User email
-                    $this->sendOrderConfirmationNotification($user, $order);
+                    $this->sendOrderConfirmationNotification($order);
                 }
 
                 break;
@@ -377,9 +377,11 @@ class OrderController extends Controller
     {
         $order = Order::find(id: $order_id);
         if ($order) {
+            $orderServices = OrderServices::where('order_id', $order->id)->get();
             return response()->json([
-                'status' => 'success',
-                'data' => $order,
+                "status" => "success",
+                "order" => new OrderResource(resource: $order),
+                "order_services" => OrderServiceResource::collection(resource: $orderServices),
             ]);
         } else {
             return response()->json([
@@ -549,8 +551,9 @@ class OrderController extends Controller
      * @param \App\Models\Order\Order $order
      * @return void
      */
-    protected function sendOrderConfirmationNotification(User $user, Order $order)
+    protected function sendOrderConfirmationNotification(Order $order)
     {
+        $user = User::find($order->user->id);
         $timeSlots = $order->orderServices->map(function ($orderService) {
             return $orderService->timeSlot; // Map each service to its associated time slot
         });

@@ -45,7 +45,7 @@ class TimeSlotConfirmationNotification extends Notification
             ->line('Бережіть своє здоров\'я та до нових зустрічей!')
             ->salutation('З повагою, команда HMS');
 
-        foreach ($this->timeslots as $slot) {
+        foreach ($this->timeSlots as $slot) {
             if ($slot instanceof TimeSlots) {
                 $details = (new TimeSlotsResource($slot))->toArray(request());
                 $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.specific_timeslot', compact('details'))->output();
