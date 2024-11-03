@@ -13,6 +13,7 @@ use App\Models\Order\OrderServices;
 use App\Http\Resources\OrderResource;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\OrderServiceResource;
+use Illuminate\Validation\Rule;
 
 class OrderFeedController extends Controller
 {
@@ -41,6 +42,17 @@ class OrderFeedController extends Controller
             'doctor_id' => ['exists:doctors,id'],
             // 'user_id' => ['exists:users,id'],
             'hospital_id' => ['exists:hospital,id'],
+            //Criteria Condition
+            'criteriaCondition' => ['array', 'sometimes'],
+            'criteriaCondition.*.column' => [
+                'string',
+                // Rule::in(array_keys($allowedColumns)), // Only allow specified columns
+            ],
+            'criteriaCondition.*.operator' => [
+                'string',
+                // Rule::in($allowedOperators), // Only allow specified operators
+            ],
+            'criteriaCondition.*.value' => 'required', // Value can be any valid input
         ]);
 
         $perPage = $request->input('per_page', 10);
@@ -332,7 +344,7 @@ class OrderFeedController extends Controller
         }
     }
 
-    private function getOrderOperationsFeed($hospitalId = null, $perPage, $page)
+    private function getOrderOperationsFeed($hospitalId = null, $perPage, $page, $criteriaCondition = [])
     {
         $query = DB::table('orders as o')
             ->leftJoin('order_payments as op', 'op.order_id', '=', 'o.id')
@@ -345,6 +357,9 @@ class OrderFeedController extends Controller
             ->leftJoin('hospital_content as hc', 'hc.hospital_id', '=', 'h.id')
             ->when($hospitalId, function ($query) use ($hospitalId) {
                 return $query->whereNotNull('hc.hospital_id');
+            })
+            ->when($criteriaCondition, function ($query) use ($criteriaCondition) {
+                return $query->where([$criteriaCondition]);
             })
             ->groupBy('o.id', 'hc.hospital_id', 'hc.title', 'clientName', 'u.phone', 'u.email', 'o.sum_total', 'o.sum_subtotal', 'o.created_at', 'o.confirmed_at', 'o.cancelled_at', 'o.cancel_reason', 'op.payment_id', 'hc.address', 'h.hospital_email', 'h.hospital_phone')
             ->selectRaw("

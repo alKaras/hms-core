@@ -177,49 +177,57 @@ class OrderProcessingService
 
     public function cancelProcessing(Request $request)
     {
-        $orderPayment = OrderPayment::where('session_id', $request->session_id)->first();
-        $order = Order::find($orderPayment->order->id);
+        if ($request->session_id) {
+            $orderPayment = OrderPayment::where('session_id', $request->session_id)->first();
+            $order = Order::find($orderPayment->order->id);
+            $checkoutCancellation = true;
+        } elseif ($request->order_id) {
+            $order = Order::find($request->order_id);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No provided data'
+            ], 404);
+        }
+
         if (!$order) {
             return response()->json([
                 'status' => 'failure',
                 'message' => 'There is no orders by provided id',
             ], 404);
         }
-        if ($order->status === 1 && $order->confirmed_at === null) {
-            $order->update([
-                'status' => 3,
-                'cancelled_at' => now(),
-                'cancel_reason' => 'Canceled by user',
-            ]);
 
-            $order->orderServices()->update([
-                'is_canceled' => 1,
-                'updated_at' => now(),
-            ]);
+        $order->update([
+            'status' => 3,
+            'cancelled_at' => now(),
+            'cancel_reason' => 'Canceled by user',
+        ]);
 
-            $this->changeOrderServicesTimeslotsState($order, TimeslotStateEnum::FREE);
+        $order->orderServices()->update([
+            'is_canceled' => 1,
+            'updated_at' => now(),
+        ]);
 
-            $orderPayment->paymentLogs()->create([
-                'order_payment_id' => $orderPayment->id,
-                'event' => 'payment_canceled',
-                'attributes' => json_encode([
-                    "code" => "payment_declined",
-                    "status" => "failure",
-                    "err_description" => "Failed to proceed payment. Check your parameters"
-                ]),
-                'updated_at' => now(),
-            ]);
+        $this->changeOrderServicesTimeslotsState($order, TimeslotStateEnum::FREE);
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Order canceled successfully',
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Something went wrong'
-            ], 500);
-        }
+
+        ($order->status === 1 && $order->confirmed_at === null) && $orderPayment->paymentLogs()->create([
+            'order_payment_id' => $orderPayment->id,
+            'event' => 'payment_canceled',
+            'attributes' => json_encode([
+                "code" => "payment_declined",
+                "status" => "failure",
+                "err_description" => "Failed to proceed payment. Check your parameters"
+            ]),
+            'updated_at' => now(),
+        ]);
+
+
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order canceled successfully',
+        ]);
     }
 
     public function sendConfirmation(Request $request)
@@ -239,8 +247,6 @@ class OrderProcessingService
             ]);
         }
     }
-
-
 
     private function changeOrderServicesTimeslotsState(Order $order, TimeslotStateEnum $status): void
     {
