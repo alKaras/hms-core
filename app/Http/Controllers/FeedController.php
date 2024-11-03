@@ -159,7 +159,6 @@ class FeedController extends Controller
         $filter = ReportFiltersEnum::tryFrom($request->input('filterType'));
 
         $hospitalId = $request->input('hospital_id') ?? null;
-        $conditionRules = $this->criteriaConditionService->validateConditionRequest($request);
 
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
