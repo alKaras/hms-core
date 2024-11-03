@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\HospitalReviewController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\OrderFeedController;
+use App\Http\Controllers\FeedController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
@@ -35,7 +35,8 @@ require __DIR__ . '/auth.php';
 
 Route::post('/webhook', [OrderController::class, 'stripeHookHandler']);
 Route::post('/checkout/cancel', [OrderController::class, 'cancel']);
-Route::post('/order/get', [OrderFeedController::class, 'getOrderByFilter']);
+Route::post('/order/get', [FeedController::class, 'getOrderByFilter']);
+Route::post('/report/get', [FeedController::class, 'getReportByFilter']);
 Route::post('/order/sendconfirmation', [OrderController::class, 'sendOrderConfirmationMail']);
 /**
  * Roles routes api/roles

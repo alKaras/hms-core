@@ -1,159 +1,28 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Customs\Services\Feeds;
 
-use App\Customs\Services\CriteriaCondition\CriteriaConditionConfig;
 use App\Customs\Services\CriteriaCondition\CriteriaConditionService;
 use App\Models\Order\Order;
-use Illuminate\Http\Request;
-use App\Models\Doctor\Doctor;
-use App\Enums\OrderFiltersEnum;
 use App\Models\Hospital\Hospital;
 use App\Models\Order\OrderPayment;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order\OrderServices;
 use App\Http\Resources\OrderResource;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\OrderServiceResource;
-use Illuminate\Validation\Rule;
 
-class OrderFeedController extends Controller
+class OrderFeedService
 {
 
     public function __construct(public CriteriaConditionService $criteriaConditionService)
     {
     }
     /**
-     * Get Order Services collection
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
-    public function getOrderServices()
-    {
-        $orderService = OrderServices::all();
-        return OrderServiceResource::collection($orderService);
-    }
-
-    /**
-     * Get Order/s by filter
-     * @param Request $request {required filter [string] | session_id | order_id | doctor_id | user_id}
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function getOrderByFilter(Request $request)
-    {
-
-        $validator = Validator::make($request->all(), [
-            'filter' => ['required', 'string'],
-            'session_id' => ['exists:order_payments,session_id'],
-            'order_id' => ['exists:orders,id'],
-            'doctor_id' => ['exists:doctors,id'],
-            // 'user_id' => ['exists:users,id'],
-            'hospital_id' => ['exists:hospital,id'],
-
-            //Criteria Condition
-            'criteriaCondition' => ['array', 'sometimes'],
-            'criteriaCondition.*' => ['array', 'size:3'],
-            'criteriaCondition.*.0' => [
-                'string',
-                Rule::in(array_keys(CriteriaConditionConfig::ALLOWED_FEED_COLUMNS)),
-            ],
-            'criteriaCondition.*.1' => [
-                'string',
-                Rule::in(CriteriaConditionConfig::ALLOWED_OPERATORS),
-            ],
-            'criteriaCondition.*.2' => 'required',
-        ]);
-
-        $perPage = $request->input('per_page', 10);
-        $page = $request->input('page', 1);
-        $onlySold = (bool) $request->input('onlySold', default: 0);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Check provided data',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-        $limit = $request->limit ?? null;
-        $filterEnum = OrderFiltersEnum::tryFrom($request->input('filter'));
-        $sessionId = $request->input('session_id') ?? null;
-        $orderId = $request->input('order_id') ?? null;
-        $doctorId = $request->input('doctor_id') ?? null;
-        // $userId = $request->input('user_id') ?? null;
-        $user = auth()->user();
-        // $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
-        $hospitalId = $request->input('hospital_id') ?? null;
-
-        $criteriaConditions = $request->input('criteriaCondition') ?? [];
-
-        switch ($filterEnum) {
-            case OrderFiltersEnum::OrdersById:
-                if ($orderId !== null) {
-                    return $this->responseByOrderId($orderId);
-                } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Order Id is required for this filter'
-                    ], 500);
-                }
-
-            case OrderFiltersEnum::OrdersbySession:
-                if ($sessionId !== null) {
-                    return $this->responseBySessionId($sessionId);
-                } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'SessionId is required for this filter'
-                    ], 500);
-                }
-
-            case OrderFiltersEnum::OrdersbyDoctor:
-                if ($doctorId !== null) {
-                    return $this->responseByDoctorId($doctorId);
-                } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'DoctorId is required for this filter'
-                    ], 500);
-                }
-
-            case OrderFiltersEnum::OrdersbyUser:
-                if ($user->id !== null) {
-                    return $this->responseByUserId($user->id, $limit, $perPage, $page, $onlySold);
-                } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'UserId is required for this filter'
-                    ], 500);
-                }
-
-            case OrderFiltersEnum::OrdersByHospital:
-                if ($hospitalId !== null) {
-                    return $this->responseByHospitalId($hospitalId, $perPage, $page);
-                } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'HospitalId is required for this filter'
-                    ], 500);
-                }
-
-            case OrderFiltersEnum::OrderOperationsFeed:
-                return $this->getOrderOperationsFeed($hospitalId, $perPage, $page, $criteriaConditions);
-
-            default:
-                return response()->json([
-                    'status' => 'error',
-                    'error' => 'Provided filter is not recognised'
-                ], 400);
-        }
-    }
-
-    /**
      * Responder for filtering by orderId
      * @param mixed $order_id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    private function responseByOrderId($order_id)
+    public function getOrderDataByOrderId($order_id)
     {
         $order = Order::find(id: $order_id);
         if ($order) {
@@ -176,7 +45,7 @@ class OrderFeedController extends Controller
      * @param mixed $session_id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    private function responseBySessionId($session_id)
+    public function getOrderDataBySessionId($session_id)
     {
         //Searching by session_id
         $orderPayment = OrderPayment::where(column: 'session_id', operator: $session_id)->first();
@@ -197,12 +66,13 @@ class OrderFeedController extends Controller
         }
     }
 
+
     /**
      * Responder for filtering orders by DoctorId
      * @param mixed $doctor_id
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    private function responseByDoctorId($doctor_id)
+    public function getOrderDataByDoctorId($doctor_id)
     {
         $doctor = Doctor::find($doctor_id);
         if ($doctor) {
@@ -251,7 +121,7 @@ class OrderFeedController extends Controller
      * @param mixed $limit
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    private function responseByUserId($user_id, $limit = null, $perPage, $page, $onlySold = false)
+    public function getOrderDataByUserId($user_id, $limit = null, $perPage, $page, $onlySold = false)
     {
         $query = $onlySold ? Order::where('user_id', '=', $user_id)->where('status', '=', '2')
             :
@@ -294,7 +164,7 @@ class OrderFeedController extends Controller
      * @param mixed $hospitalId
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    private function responseByHospitalId($hospitalId, $perPage, $page)
+    public function getOrderDataByHospitalId($hospitalId, $perPage, $page)
     {
         $hospital = Hospital::find($hospitalId);
         if ($hospital) {
@@ -354,7 +224,15 @@ class OrderFeedController extends Controller
         }
     }
 
-    private function getOrderOperationsFeed($hospitalId = null, $perPage, $page, $criteriaCondition = [])
+    /**
+     * getOrderOperationsFeed method
+     * @param mixed $hospitalId
+     * @param mixed $perPage
+     * @param mixed $page
+     * @param mixed $criteriaCondition
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function getOrderOperationsFeed($hospitalId = null, $perPage, $page, $criteriaCondition = [])
     {
         $query = DB::table('orders as o')
             ->leftJoin('order_payments as op', 'op.order_id', '=', 'o.id')
@@ -379,11 +257,11 @@ class OrderFeedController extends Controller
                 hc.address as `hospitalAddress`,
                 h.hospital_email as `hospitalEmail`,
                 h.hospital_phone as `hospitalPhone`,
-                CASE 
-                    WHEN o.status = 1 THEN 'PENDING' 
-                    WHEN o.status = 2 THEN 'SOLD' 
-                    WHEN o.status = 3 THEN 'CANCELED' 
-                    ELSE '' 
+                CASE
+                    WHEN o.status = 1 THEN 'PENDING'
+                    WHEN o.status = 2 THEN 'SOLD'
+                    WHEN o.status = 3 THEN 'CANCELED'
+                    ELSE ''
                 END AS `paidStatus`,
                 CONCAT(u.name, ' ', u.surname) AS `clientName`,
                 u.phone AS `phone`,
