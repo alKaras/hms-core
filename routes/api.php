@@ -133,6 +133,7 @@ Route::prefix('/timeslots')->group(function () {
     Route::post('/getbydoctor', [TimeSlotsController::class, 'showByDoctor']);
     Route::post('/getbyservice', [TimeSlotsController::class, 'showByService']);
     Route::post('/getbydate', [TimeSlotsController::class, 'showByDate']);
+    Route::post('/free/get', [TimeSlotsController::class, 'showFreeSlots']);
     Route::post('/generate', [TimeSlotsController::class, 'generateTimeSlots']);
     Route::post('/create', [TimeSlotsController::class, 'store']);
     Route::put('/{id}/edit', [TimeSlotsController::class, 'update']);
