@@ -117,6 +117,7 @@ class TimeSlotsController extends Controller
         $doctorId = $request->input('doctor_id');
 
         $freeSlotsCounter = DB::table('time_slots')
+            ->where('start_time', '>', Carbon::now())
             ->when($serviceId, function ($query) use ($serviceId) {
                 return $query->whereNotNull('service_id');
             })
