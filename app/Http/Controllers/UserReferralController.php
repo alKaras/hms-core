@@ -6,6 +6,7 @@ use App\Http\Resources\UserReferralResource;
 use App\Models\HServices;
 use App\Models\User\User;
 use App\Models\User\UserReferral;
+use App\Notifications\UserReferralNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -80,6 +81,10 @@ class UserReferralController extends Controller
             'decoded_data' => json_encode($decodedData),
             'expired_at' => now()->addYear(),
         ]);
+
+        $user = User::find($request->user_id);
+
+        $user->notify(new UserReferralNotification($userReferral->referral_code));
 
         return new UserReferralResource($userReferral);
     }

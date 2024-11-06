@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\TimeslotStateEnum;
-use Barryvdh\DomPDF\Facade as PDF;
 use Validator;
 use Carbon\Carbon;
 use App\Models\HServices;
 use App\Models\TimeSlots;
 use Illuminate\Http\Request;
 use App\Models\Doctor\Doctor;
+use App\Enums\TimeslotStateEnum;
+use Barryvdh\DomPDF\Facade as PDF;
+use Illuminate\Support\Facades\DB;
 use App\Http\Resources\TimeSlotsResource;
 
 class TimeSlotsController extends Controller
@@ -90,6 +91,49 @@ class TimeSlotsController extends Controller
 
         return TimeSlotsResource::collection($doctorTimeslots);
 
+    }
+
+    /**
+     * Show free slots by service|doctor
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function showFreeSlots(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'service_id' => ['exists:service,id'],
+            'doctor_id' => ['exists:doctors,id']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Not validated data',
+                'errors' => $validator->errors()
+            ]);
+        }
+
+        $serviceId = $request->input('service_id');
+        $doctorId = $request->input('doctor_id');
+
+        $freeSlotsCounter = DB::table('time_slots')
+            ->when($serviceId, function ($query) use ($serviceId) {
+                return $query->whereNotNull('service_id');
+            })
+            ->when($doctorId, function ($query) use ($doctorId) {
+                return $query->whereNotNull('doctor_id');
+            })
+            ->groupBy('service_id', 'DATE(start_time)')
+            ->selectRaw("
+            service_id as `serviceId`,
+            DATE(start_time) as `date`,
+            COUNT(*) as `free_slots`
+        ")->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $freeSlotsCounter,
+        ]);
     }
 
     /**
