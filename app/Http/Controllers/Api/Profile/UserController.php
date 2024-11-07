@@ -258,7 +258,7 @@ class UserController extends Controller
         ]);
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Role Attached successfully'
         ]);
     }
@@ -289,7 +289,7 @@ class UserController extends Controller
             if ($role) {
                 $user->roles()->detach($role->id);
                 return response()->json([
-                    'status' => 'success',
+                    'status' => 'ok',
                     'message' => 'Role detached successfully',
                 ]);
             } else {
@@ -326,7 +326,7 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'User and their roles deleted successfully'
         ]);
     }

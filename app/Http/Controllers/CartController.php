@@ -150,7 +150,7 @@ class CartController extends Controller
         $cart->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Cart deleted successfully',
         ]);
     }

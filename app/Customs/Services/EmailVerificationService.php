@@ -31,7 +31,7 @@ class EmailVerificationService
             $this->sendVerificationLink($user);
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'message' => 'verification link sent successfully',
             ]);
         } else {
@@ -101,7 +101,7 @@ class EmailVerificationService
         if ($user->markEmailAsVerified()) {
             $verifiedToken->delete();
             response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'message' => 'Email has been verified successfully'
             ])->send();
         } else {

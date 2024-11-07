@@ -109,7 +109,7 @@ class OrderProcessingService
             $this->sendOrderConfirmationNotification($order);
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'success_url' => env("REACT_APP_URL") . "/checkout/payment/success?order_id={$order->id}",
                 'order' => $order,
                 'line_items' => $lineItems
@@ -225,7 +225,7 @@ class OrderProcessingService
 
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Order canceled successfully',
         ]);
     }
@@ -237,7 +237,7 @@ class OrderProcessingService
         if ($order) {
             $this->sendOrderConfirmationNotification($order);
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'message' => 'Order confirmation sent successfully.'
             ]);
         } else {

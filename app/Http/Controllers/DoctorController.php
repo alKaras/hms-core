@@ -50,7 +50,7 @@ class DoctorController extends Controller
 
         $doctors = $service->doctors;
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'data' => $doctors->filter(function ($doctor) {
                 return $doctor->hidden === 0;
             })
@@ -148,7 +148,7 @@ class DoctorController extends Controller
 
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Doctor created successfully',
             'data' => new DoctorResource($doctor)
         ]);
@@ -184,7 +184,7 @@ class DoctorController extends Controller
         }
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Doctors imported successfully'
         ]);
     }
@@ -269,7 +269,7 @@ class DoctorController extends Controller
         $doctor->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Doctor deleted successfully',
         ]);
     }

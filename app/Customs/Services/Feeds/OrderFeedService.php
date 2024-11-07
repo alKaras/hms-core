@@ -96,7 +96,7 @@ class OrderFeedService
                 ->get();
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'data' => collect($doctorOrders)->map(function ($order) {
                     return [
                         'id' => $order->orderId,
@@ -130,7 +130,7 @@ class OrderFeedService
 
         if (!empty($orders)) {
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'data' => $orders->map(function ($order) {
                     $orderServices = OrderServices::where('order_id', '=', $order->id)->get();
                     return [
@@ -199,7 +199,7 @@ class OrderFeedService
             });
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'data' => $hospitalOrders->items(),
                 'meta' => [
                     'current_page' => $hospitalOrders->currentPage(),
@@ -303,7 +303,7 @@ class OrderFeedService
         });
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'data' => $query->items(),
             'meta' => [
                 'current_page' => $query->currentPage(),

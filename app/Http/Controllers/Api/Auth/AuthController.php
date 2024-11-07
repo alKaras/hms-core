@@ -175,7 +175,7 @@ class AuthController extends Controller
     {
         Auth::logout();
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'User has been logged out successfully',
         ]);
     }
@@ -186,7 +186,7 @@ class AuthController extends Controller
     protected function responseWithToken($token, $user, $roles = null)
     {
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'user' => $user,
             'roles' => $roles ?? null,
             'access_token' => $token,

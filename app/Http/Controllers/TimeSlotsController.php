@@ -132,7 +132,7 @@ class TimeSlotsController extends Controller
         ")->get();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'data' => $freeSlotsCounter,
         ]);
     }
@@ -222,7 +222,7 @@ class TimeSlotsController extends Controller
 
                 if (!empty($filteredServicesSlots)) {
                     return response()->json([
-                        'status' => 'success',
+                        'status' => 'ok',
                         'data' => TimeSlotsResource::collection($filteredServicesSlots)
                     ]);
                 } else {
@@ -234,7 +234,7 @@ class TimeSlotsController extends Controller
             }
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'data' => TimeSlotsResource::collection($serviceTimeSlots),
             ]);
         } elseif (null !== $doctor) {
@@ -245,7 +245,7 @@ class TimeSlotsController extends Controller
 
                 if (!empty($filteredDoctorSlots)) {
                     return response()->json([
-                        'status' => 'success',
+                        'status' => 'ok',
                         'data' => TimeSlotsResource::collection($filteredDoctorSlots),
                     ]);
                 } else {
@@ -257,13 +257,13 @@ class TimeSlotsController extends Controller
             }
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'data' => TimeSlotsResource::collection($doctorTimeSlots),
             ]);
         }
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'data' => TimeSlotsResource::collection($timeslots),
         ], 200);
     }
@@ -298,7 +298,7 @@ class TimeSlotsController extends Controller
         ]);
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'TimeSlot has created successfully',
             'timeslot' => $timeslot
         ]);
@@ -350,7 +350,7 @@ class TimeSlotsController extends Controller
         TimeSlots::insert($timeslots);
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => "Timeslots successfully generated for serviceId$serviceId",
             'data' => $timeslots
         ]);
@@ -432,7 +432,7 @@ class TimeSlotsController extends Controller
         $timeSlot->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'TimeSlot deleted successfully',
         ]);
     }

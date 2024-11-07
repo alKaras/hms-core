@@ -82,7 +82,7 @@ class HospitalReviewController extends Controller
 
         if ($hospitalReview) {
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'review' => new HospitalReviewResource($hospitalReview)
             ]);
         } else {
@@ -103,7 +103,7 @@ class HospitalReviewController extends Controller
             $countReviews = HospitalReview::where('hospital_id', $hospital->id)->count();
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'countReviews' => $countReviews
             ]);
         } else {
@@ -127,7 +127,7 @@ class HospitalReviewController extends Controller
             $review->delete();
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
             ]);
         } else {
             return response()->json([

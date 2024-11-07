@@ -7,7 +7,7 @@ class PasswordService
 
     private function validatePassword($current_password)
     {
-        if (!password_verify($current_password, auth()->user()->password)){
+        if (!password_verify($current_password, auth()->user()->password)) {
             response()->json([
                 'status' => 'failed',
                 'message' => "Password didn't match the current password",
@@ -23,15 +23,15 @@ class PasswordService
             'password' => bcrypt($data['password'])
         ]);
 
-        if ($updatePassword){
+        if ($updatePassword) {
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'message' => 'Password updated successfully'
             ]);
         } else {
             return response()->json([
-               'status' => 'failed',
-               'message' => 'An error occurred while updating password'
+                'status' => 'failed',
+                'message' => 'An error occurred while updating password'
             ]);
         }
     }

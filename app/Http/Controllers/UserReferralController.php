@@ -120,7 +120,7 @@ class UserReferralController extends Controller
         $referral->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message'
         ]);
     }

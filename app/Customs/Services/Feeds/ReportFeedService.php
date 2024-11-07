@@ -71,7 +71,7 @@ class ReportFeedService
         });
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'general' => $generalQuery,
             'detailed' => $hospitalServicesQuery->items(),
         ]);

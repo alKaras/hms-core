@@ -59,7 +59,7 @@ class HServicesController extends Controller
         $doctor = Doctor::with(['services'])->where('id', $request->doctor_id)->first();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'data' => $doctor->services->map(function ($service) {
                 return [
                     "id" => $service->id,
@@ -120,7 +120,7 @@ class HServicesController extends Controller
 
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'message' => 'Service created successfully',
                 'service' => $service
             ], 201);
@@ -165,7 +165,7 @@ class HServicesController extends Controller
 
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Services imported successfully'
         ]);
 
@@ -197,7 +197,7 @@ class HServicesController extends Controller
         $service->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Service and connected entities deleted successfully',
         ]);
     }
