@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Hospital\HospitalDepartments;
 use Exception;
 use Illuminate\Http\Request;
 use App\Imports\DepartmentImport;
@@ -21,6 +22,51 @@ class DepartmentController extends Controller
     {
         $department = Department::with('content')->get();
         return DepartmentResource::collection($department);
+    }
+
+    /**
+     * Attach existed departments to the hospital
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function attachExistedDepartments(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'hospital_id' => ['required', 'exists:id,hospital'],
+            'department_ids.*' => ['required', 'exists:department,id'],
+            'department_id' => ['required', 'array']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $departments = Department::whereIn('id', $request->department_id)->get();
+
+        foreach ($departments as $department) {
+            DB::table('hospital_departments')->insert([
+                'hospital_id' => $request->hospital_id,
+                'department_id' => $department->id,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        if (HospitalDepartments::where('id', '=', $request->hospital_id)->count() > 0) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Departments attached to the hospital successfully',
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Something went wrong'
+            ], 500);
+        }
+
     }
 
     /**
@@ -62,7 +108,7 @@ class DepartmentController extends Controller
 
             if (!$hospital) {
                 return response()->json([
-                    'status' => 'failure',
+                    'status' => 'error',
                     'message' => "No hospitals for provided id{$request->hospital_id}"
                 ], 404);
             }
@@ -77,7 +123,7 @@ class DepartmentController extends Controller
 
         } else {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'An error occurred while creating department',
             ], 500);
         }
@@ -114,7 +160,7 @@ class DepartmentController extends Controller
         }
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Departments imported successfully'
         ]);
     }
@@ -128,7 +174,7 @@ class DepartmentController extends Controller
 
         if (!$department) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for given department'
             ], 404);
         }
@@ -146,7 +192,7 @@ class DepartmentController extends Controller
 
         if (!$department) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for given department'
             ], 404);
         }
@@ -187,7 +233,7 @@ class DepartmentController extends Controller
         $department = Department::with('content')->find($id);
         if (!$department) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for given department'
             ], 404);
         }
@@ -197,7 +243,7 @@ class DepartmentController extends Controller
         $department->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Department and related tables deleted successfully'
         ]);
     }

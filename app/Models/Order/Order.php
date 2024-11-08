@@ -3,6 +3,7 @@
 namespace App\Models\Order;
 
 use App\Models\User\User;
+use App\Models\Hospital\Hospital;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -14,6 +15,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'hospital_id',
         'sum_total',
         'sum_subtotal',
         'status',
@@ -42,5 +44,10 @@ class Order extends Model
     public function orderStatus()
     {
         return $this->belongsTo(OrderStatusRef::class);
+    }
+
+    public function hospital()
+    {
+        return $this->belongsTo(Hospital::class);
     }
 }

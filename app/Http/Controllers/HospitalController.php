@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use DB;
 use Illuminate\Http\Request;
+use App\Models\Doctor\Doctor;
 use App\Models\HospitalReview;
 use App\Models\Hospital\Hospital;
 use App\Http\Resources\HospitalResource;
@@ -63,7 +64,7 @@ class HospitalController extends Controller
             return new HospitalResource($hospital);
         } else {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'An error occurred while creating hospital',
             ]);
         }
@@ -79,7 +80,7 @@ class HospitalController extends Controller
 
         if (!$hospital) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for given hospital'
             ], 404);
         }
@@ -131,7 +132,7 @@ class HospitalController extends Controller
             ->get();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'services' => collect($servicesData)->map(function ($service) {
                 return [
                     'id' => $service->id,
@@ -158,7 +159,7 @@ class HospitalController extends Controller
             ->first();
         if (!$hospital) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "No data for provided id {$hospital_id}",
             ]);
         }
@@ -182,13 +183,7 @@ class HospitalController extends Controller
                 'error' => $validator->errors()
             ], 422);
         }
-        $hospital = Hospital::with(['departments.doctors.user'])
-            ->where('id', $request->hospital_id)
-            ->first();
-
-        if (!$hospital) {
-            return response()->json(['message' => 'Hospital not found'], 404);
-        }
+        $hospital = Hospital::find($request->hospital_id);
 
         if ($request->dep_alias) {
             $department = $hospital->departments->where('alias', $request->dep_alias)->first();
@@ -199,7 +194,7 @@ class HospitalController extends Controller
             $doctors = $department->doctors;
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'doctors' => $doctors->map(function ($doctor) {
                     return [
                         'id' => $doctor->id,
@@ -213,21 +208,19 @@ class HospitalController extends Controller
             ]);
         }
 
-        $doctors = DB::table('hospital_departments as hd')
-            ->join('department as d', 'd.id', '=', 'hd.department_id')
-            ->join('department_content as dc', 'dc.department_id', '=', 'd.id')
-            ->join('doctor_departments as dd', 'dd.department_id', '=', 'd.id')
-            ->join('doctors as doctor', 'doctor.id', '=', 'dd.doctor_id')
-            ->join('users as u', 'u.id', '=', 'doctor.user_id')
-            ->leftJoin('doctor_services as ds', 'ds.doctor_id', '=', 'doctor.id')
+        $doctors = DB::table('doctors as d')
+            ->leftJoin('users as u', 'u.id', '=', 'd.user_id')
+            ->leftJoin('doctor_departments as dd', 'dd.doctor_id', '=', 'd.id')
+            ->leftJoin('department_content as dc', 'dc.department_id', '=', 'dd.department_id')
+            ->leftJoin('doctor_services as ds', 'ds.doctor_id', '=', 'd.id')
             ->leftJoin('services as s', 's.id', '=', 'ds.service_id')
-            ->where('hd.hospital_id', $hospital->id)
-            ->groupBy('doctor.id')
-            ->selectRaw('doctor.id as id, u.name as name, u.surname as surname, u.email as email, doctor.specialization as specialization, doctor.hidden, GROUP_CONCAT(distinct dc.title) as departments, GROUP_CONCAT(distinct s.name) as services')
+            ->where('d.hospital_id', $hospital->id)
+            ->groupBy('d.id')
+            ->selectRaw('d.id as id, u.name as name, u.surname as surname, u.email as email, d.specialization as specialization, d.hidden, GROUP_CONCAT(distinct dc.title) as departments, GROUP_CONCAT(distinct s.name) as services')
             ->get();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'doctors' => collect($doctors)->map(function ($doctor) {
                 return [
                     'id' => $doctor->id,
@@ -253,7 +246,7 @@ class HospitalController extends Controller
 
         if (!$hospital) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for provided hospital'
             ], 404);
         }
@@ -301,7 +294,7 @@ class HospitalController extends Controller
                 ->value('avg_rating');
 
             return response()->json([
-                'status' => 'success',
+                'status' => 'ok',
                 'avgRating' => $averageRating
             ]);
         } else {
@@ -320,7 +313,7 @@ class HospitalController extends Controller
         $hospital = Hospital::with('content')->find($hospital_id);
         if (!$hospital) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for provided hospital'
             ], 404);
         }
@@ -328,7 +321,7 @@ class HospitalController extends Controller
         $hospital->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Hospital deleted successfully',
         ], 200);
     }

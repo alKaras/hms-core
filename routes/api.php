@@ -62,6 +62,8 @@ Route::prefix('hospital')->group(function () {
     Route::post('create', [HospitalController::class, 'store']);
     Route::put('edit/{id}', [HospitalController::class, 'update']);
     Route::delete('delete/{id}', [HospitalController::class, 'destroy']);
+
+    Route::post('/department/attach', [DepartmentController::class, 'attachExistedDepartments']);
 });
 
 /**

@@ -49,7 +49,7 @@ class UserReferralController extends Controller
             ], 422);
         }
 
-        $services = Hservices::whereIn('id', $request->service_id)->get();
+        $services = HServices::whereIn('id', $request->service_id)->get();
 
         $decodedData = [
             'user' => [
@@ -97,7 +97,7 @@ class UserReferralController extends Controller
         $referral = UserReferral::find($id);
         if (!$referral) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "No user referrals for provided id $id",
             ]);
         }
@@ -112,7 +112,7 @@ class UserReferralController extends Controller
         $referral = UserReferral::find($id);
         if (!$referral) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "No user referrals for provided id $id",
             ]);
         }
