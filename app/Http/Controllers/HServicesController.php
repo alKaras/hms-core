@@ -172,11 +172,15 @@ class HServicesController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update 
      */
-    public function update(Request $request, HServices $hServices)
+    public function update(Request $request, $id)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'hospital_id' => ['required', 'exists:hospital,id'],
+            'doctors' => ['required', 'array'],
+            'doctors.*' => ['required', '']
+        ]);
     }
 
     /**

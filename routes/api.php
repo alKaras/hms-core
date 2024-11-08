@@ -64,6 +64,7 @@ Route::prefix('hospital')->group(function () {
     Route::delete('delete/{id}', [HospitalController::class, 'destroy']);
 
     Route::post('/department/attach', [DepartmentController::class, 'attachExistedDepartments']);
+    Route::post('/department/list/unassigned', [DepartmentController::class, 'getUnassignedDepartments']);
 });
 
 /**
