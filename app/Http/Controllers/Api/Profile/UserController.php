@@ -151,7 +151,7 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'User is not registered or added',
             ], 404);
         }
@@ -168,7 +168,7 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for provided user_id'
             ], 404);
         }
@@ -217,7 +217,7 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'User not found',
             ], 404);
         }
@@ -236,7 +236,7 @@ class UserController extends Controller
 
         if (!$role) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'Role not found'
             ], 404);
         }
@@ -247,7 +247,7 @@ class UserController extends Controller
 
         if ($existedRole) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'Role is already attached to user',
             ]);
         }
@@ -294,13 +294,13 @@ class UserController extends Controller
                 ]);
             } else {
                 return response()->json([
-                    'status' => 'failure',
+                    'status' => 'error',
                     'message' => 'Role not found',
                 ], 404);
             }
         }
         return response()->json([
-            'status' => 'failure',
+            'status' => 'error',
             'message' => 'User not found',
         ], 404);
     }
@@ -317,7 +317,7 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "Can\'t find any users by provided id #$user_id"
             ], 404);
         }

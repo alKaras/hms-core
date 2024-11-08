@@ -30,7 +30,7 @@ class HServicesController extends Controller
         $services = HServices::find($id);
         if (!$services) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "No provided services for given id #$id"
             ]);
         }
@@ -50,7 +50,7 @@ class HServicesController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'check provided doctor_id',
                 'errors' => $validator->errors()
             ], 422);
@@ -94,7 +94,7 @@ class HServicesController extends Controller
 
         if (!$department) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "Department for provided alias {$request->department} doesn't exist"
             ], 404);
         }
@@ -126,7 +126,7 @@ class HServicesController extends Controller
             ], 201);
         } else {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'An error occurred registering service',
             ], 500);
         }
@@ -187,7 +187,7 @@ class HServicesController extends Controller
         $service = HServices::find($id);
         if (!$service) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "Can\'t find any services by provided id #$id",
             ], 404);
         }

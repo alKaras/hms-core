@@ -48,7 +48,7 @@ class DoctorImport implements ToModel, WithHeadingRow
         $existedDoctor = Doctor::where('user_id', $user->id)->first();
         if ($existedDoctor) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "The doctor for this user id {$user->id} has already been created"
             ], 500);
         }

@@ -23,7 +23,7 @@ class DepartmentImport implements ToModel, WithHeadingRow
 
         if (!$hospital || $existedDepartment) {
             throw ValidationException::withMessages([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "An error occurred importing department: Hospital does not exist or department already exists."
             ]);
         }
