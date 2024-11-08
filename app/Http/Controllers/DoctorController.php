@@ -272,7 +272,11 @@ class DoctorController extends Controller
             ]);
         }
 
+        $doctor->user->hospital_id = null;
+        $doctor->user->save();
+
         $doctor->departments()->detach();
+        $doctor->services()->detach();
         $doctor->delete();
 
         return response()->json([

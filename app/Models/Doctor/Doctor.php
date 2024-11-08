@@ -41,9 +41,4 @@ class Doctor extends Model
     {
         return $this->hasMany(TimeSlots::class);
     }
-
-    public function hospital()
-    {
-        return $this->belongsTo(Hospital::class);
-    }
 }

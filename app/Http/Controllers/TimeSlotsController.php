@@ -204,81 +204,37 @@ class TimeSlotsController extends Controller
         }
 
         $date = $request->input('date');
-        $service = HServices::find($request->input('service_id'));
-        $doctor = Doctor::find($request->input('doctor_id'));
-        $hospitalId = Hospital::find($request->input('hospital_id'));
-        // $timeslots = TimeSlots::byDate($date)->doctor->where('hospital_id', '=', $hospitalId)->get();
-        $timeslots = DB::table("time_slots as ts")
-            ->leftJoin("doctors as d", "d.id", "=", "ts.doctor_id")
-            ->whereDate("ts.start_time", $date)
-            ->where("d.hospital_id", "=", $hospitalId);
-
+        $serviceId = $request->input('service_id');
+        $hospitalId = $request->input('hospital_id');
+        $doctorId = $request->input('doctor_id');
         $freeOnly = $request->input('freeOnly');
 
-        if ($timeslots->get()->isEmpty()) {
+        $timeslots = TimeSlots::byDate($date)
+            ->whereHas('doctor.user', function ($query) use ($hospitalId) {
+                $query->where('hospital_id', $hospitalId);
+            })
+            ->when($serviceId, function ($query, $serviceId) {
+                $query->where('service_id', $serviceId);
+            })
+            ->when($doctorId, function ($query) use ($doctorId) {
+                $query->where('doctor_id', $doctorId);
+            })
+            ->when($freeOnly, function ($query) {
+                $query->where('state', TimeslotStateEnum::FREE);
+            })
+            ->with(['service.department.content', 'doctor.user', 'service.hospitals.content'])
+            ->get();
+
+        if ($timeslots->isEmpty()) {
             return response()->json([
                 'status' => 'error',
                 'data' => [],
             ], 200);
         }
 
-        if (null !== $service) {
-            // $serviceTimeSlots = $timeslots->filter(fn($timeslot) => $timeslot->service_id == $service->id);
-            $serviceTimeSlots = $timeslots->where('ts.service_id', '=', $service->id)->get();
-
-            if ($freeOnly) {
-                // $filteredServicesSlots = $serviceTimeSlots->filter(fn($timeslot) => $timeslot->state === TimeslotStateEnum::FREE);
-                $filteredServicesSlots = $timeslots->where('ts.service_id', '=', $service->id)
-                    ->where('ts.state', '=', TimeslotStateEnum::FREE)->get();
-
-                if (!empty($filteredServicesSlots)) {
-                    return response()->json([
-                        'status' => 'ok',
-                        'data' => TimeSlotsResource::collection($filteredServicesSlots)
-                    ]);
-                } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'data' => []
-                    ], 404);
-                }
-            }
-
-            return response()->json([
-                'status' => 'ok',
-                'data' => TimeSlotsResource::collection($serviceTimeSlots),
-            ]);
-        } elseif (null !== $doctor) {
-            // $doctorTimeSlots = $timeslots->filter(fn($timeslot) => $doctor->id == $timeslot->doctor_id);
-            $doctorTimeSlots = $timeslots->where('ts.doctor_id', '=', $doctor->id)->get();
-
-
-            if ($freeOnly) {
-                // $filteredDoctorSlots = $doctorTimeSlots->filter(fn($timeslot) => $timeslot->state === TimeslotStateEnum::FREE);
-                $filteredDoctorSlots = $timeslots->where('ts.doctor_id', '=', $doctor->id)->where("ts.state", '=', TimeslotStateEnum::FREE)->get();
-
-                if (!empty($filteredDoctorSlots)) {
-                    return response()->json([
-                        'status' => 'ok',
-                        'data' => TimeSlotsResource::collection($filteredDoctorSlots),
-                    ]);
-                } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'data' => [],
-                    ], 404);
-                }
-            }
-
-            return response()->json([
-                'status' => 'ok',
-                'data' => TimeSlotsResource::collection($doctorTimeSlots->get()),
-            ]);
-        }
-
         return response()->json([
             'status' => 'ok',
-            'data' => TimeSlotsResource::collection($timeslots->get()),
+            'data' => TimeSlotsResource::collection($timeslots),
         ], 200);
     }
 

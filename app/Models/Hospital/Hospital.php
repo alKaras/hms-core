@@ -3,6 +3,7 @@
 namespace App\Models\Hospital;
 
 use App\Models\Cart\Cart;
+use App\Models\Doctor\Doctor;
 use App\Models\HServices;
 use App\Models\User\User;
 use App\Models\Order\Order;
@@ -37,7 +38,7 @@ class Hospital extends Model
         return $this->belongsToMany(HServices::class, 'hospital_services', 'hospital_id', 'service_id');
     }
 
-    public function managers()
+    public function workers()
     {
         return $this->hasMany(User::class);
     }

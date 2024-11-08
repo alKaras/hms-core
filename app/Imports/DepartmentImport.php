@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 
+use Carbon\Carbon;
 use App\Models\Hospital\Hospital;
 use Illuminate\Support\Facades\DB;
 use App\Models\Department\Department;
@@ -17,15 +18,29 @@ class DepartmentImport implements ToModel, WithHeadingRow
      */
     public function model(array $row)
     {
-        $existedDepartment = Department::where("alias", $row['alias'])->exists();
+        $existedDepartment = Department::where("alias", $row['alias'])->first();
 
         $hospital = Hospital::find($row['hospital_id']);
 
-        if (!$hospital || $existedDepartment) {
+        if (!$hospital) {
             throw ValidationException::withMessages([
                 'status' => 'error',
-                'message' => "An error occurred importing department: Hospital does not exist or department already exists."
+                'message' => "An error occurred importing department: Hospital does not exist"
             ]);
+        }
+
+
+        if ($existedDepartment) {
+            if (!$existedDepartment->hospitals->contains($hospital->id)) {
+                DB::table('hospital_departments')->insert([
+                    'department_id' => $existedDepartment->id,
+                    'hospital_id' => $hospital->id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()
+                ]);
+            }
+
+            return $existedDepartment;
         }
 
         $department = Department::create([

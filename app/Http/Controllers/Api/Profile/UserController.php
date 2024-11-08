@@ -26,18 +26,9 @@ class UserController extends Controller
 
         //        $roles = $user->roles()->pluck('title')->first();
         $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
-        if ($highestPriorityRole === 'doctor') {
-            $hospitalId = Hospital::find($user->doctor->hospital_id)->first() ?? null;
-            return response()->json([
-                'user' => [
-                    'data' => $user,
-                    'roles' => $highestPriorityRole,
-                    'id' => $user->id,
-                    'hospitalId' => $hospitalId->id ?? null,
-                ]
-            ]);
-        } else if ($highestPriorityRole === 'manager') {
-            $hospitalId = Hospital::find($user->hospital_id) ?? 0;
+
+        if ($highestPriorityRole === 'doctor' || $highestPriorityRole === 'manager') {
+            $hospitalId = Hospital::find($user->hospital_id)->first() ?? null;
             return response()->json([
                 'user' => [
                     'data' => $user,

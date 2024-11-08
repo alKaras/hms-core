@@ -113,29 +113,40 @@ class HospitalController extends Controller
             return response()->json(['message' => 'Hospital not found'], 404);
         }
 
-        $servicesData = DB::table('hospital_services as hs')
-            ->leftJoin('services as s', 's.id', '=', 'hs.service_id')
-            ->leftJoin('doctor_services as ds', 's.id', '=', 'ds.service_id')
-            ->leftJoin('doctors as doctor', 'ds.doctor_id', '=', 'doctor.id')
-            ->leftJoin('users as u', 'u.id', '=', 'doctor.user_id')
-            ->leftJoin('department as d', 's.department_id', '=', 'd.id')
-            ->leftJoin('department_content as dc', 'dc.department_id', '=', 'd.id')
-            ->where('hs.hospital_id', $hospital->id)
-            ->groupBy('s.id', 's.name', 'dc.title')
-            ->selectRaw("
-                s.id as id, 
+        $servicesData = DB::table('hms.hospital_services as hs')
+            ->join('hms.services as s', 'hs.service_id', '=', 's.id')
+            ->leftJoin('hms.doctor_services as ds', 's.id', '=', 'ds.service_id')
+            ->leftJoin('hms.doctors as d', 'ds.doctor_id', '=', 'd.id')
+            ->leftJoin('hms.users as u', function ($join) {
+                $join->on('d.user_id', '=', 'u.id')
+                    ->whereColumn('u.hospital_id', '=', 'hs.hospital_id');
+            })
+            ->leftJoin("department as dep", 'dep.id', '=', 's.department_id')
+            ->leftJoin("department_content as dc", 'dc.department_id', '=', 'dep.id')
+            ->where('u.hospital_id', $hospital->id)
+            ->selectRaw(
+                's.id as service_id, 
                 s.name as service_name, 
-                IFNULL(s.description, '') as description, 
-                dc.title as department, 
-                JSON_ARRAYAGG(JSON_OBJECT('doctor_id', doctor.id, 'name', concat(u.name, ' ', u.surname), 'email', u.email)) as doctorsInfo
-            ")
+                IFNULL(s.description, "") as description,
+                dc.title as department,
+                JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        "doctor_id", d.id,
+                        "specialization", d.specialization,
+                        "name", CONCAT(u.name, " ", u.surname),
+                        "email", u.email
+                    )
+                ) as doctorsInfo'
+            )
+            ->groupBy('s.id', 's.name', 'dc.title')
             ->get();
+
 
         return response()->json([
             'status' => 'ok',
             'services' => collect($servicesData)->map(function ($service) {
                 return [
-                    'id' => $service->id,
+                    'id' => $service->service_id,
                     'service_name' => $service->service_name,
                     'description' => $service->description,
                     'department' => $service->department,
@@ -214,7 +225,7 @@ class HospitalController extends Controller
             ->leftJoin('department_content as dc', 'dc.department_id', '=', 'dd.department_id')
             ->leftJoin('doctor_services as ds', 'ds.doctor_id', '=', 'd.id')
             ->leftJoin('services as s', 's.id', '=', 'ds.service_id')
-            ->where('d.hospital_id', $hospital->id)
+            ->where('u.hospital_id', $hospital->id)
             ->groupBy('d.id')
             ->selectRaw('d.id as id, u.name as name, u.surname as surname, u.email as email, d.specialization as specialization, d.hidden, GROUP_CONCAT(distinct dc.title) as departments, GROUP_CONCAT(distinct s.name) as services')
             ->get();
