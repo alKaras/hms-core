@@ -26,6 +26,7 @@ class UserController extends Controller
 
         //        $roles = $user->roles()->pluck('title')->first();
         $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
+        $userRecord = User::find($user->id);
 
         if ($highestPriorityRole === 'doctor' || $highestPriorityRole === 'manager') {
             $hospitalId = Hospital::find($user->hospital_id)->first() ?? null;
@@ -35,6 +36,7 @@ class UserController extends Controller
                     'roles' => $highestPriorityRole,
                     'id' => $user->id,
                     'hospitalId' => $hospitalId->id ?? null,
+                    'doctor' => $highestPriorityRole === 'doctor' ? $userRecord->doctor?->id : null,
                 ]
             ]);
         } else {

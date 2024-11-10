@@ -21,17 +21,17 @@ class ReportFeedService
             ->leftJoin('order_services as os', 'o.id', '=', 'os.order_id')
             ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
             ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
-            ->leftJoin('hospital_services as hs', 'hs.service_id', '=', 's.id')
-            ->leftJoin('hospital as h', 'h.id', '=', 'hs.hospital_id')
+            // ->leftJoin('hospital_services as hs', 'hs.service_id', '=', 's.id')
+            ->leftJoin('hospital as h', 'h.id', '=', 'o.hospital_id')
             ->leftJoin('hospital_content as hc', 'hc.hospital_id', '=', 'h.id')
             ->where('o.status', '=', 2)
-            ->where('hs.hospital_id', '=', $hospital->id)
+            ->where('o.hospital_id', '=', $hospital->id)
             ->when($criteriaConditions, function ($query) use ($criteriaConditions) {
                 return $this->criteriaConditionService->applyConditions($query, $criteriaConditions);
             })
-            ->groupBy('hs.hospital_id', 'hc.title', 'hc.address')
+            ->groupBy('o.hospital_id', 'hc.title', 'hc.address')
             ->selectRaw("
-                hs.hospital_id as `hospitalId`,
+                o.hospital_id as `hospitalId`,
                 hc.title as `hospitalTitle`,
                 hc.address as `hospitalAddress`,
                 COUNT(os.id) as `totalServiceQuantity`,
@@ -45,10 +45,9 @@ class ReportFeedService
             ->leftJoin('order_services as os', 'o.id', '=', 'os.order_id')
             ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
             ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
-            ->leftJoin('hospital_services as hs', 'hs.service_id', '=', 's.id')
-            ->leftJoin('hospital as h', 'h.id', '=', 'hs.hospital_id')
+            ->leftJoin('hospital as h', 'h.id', '=', 'o.hospital_id')
             ->where('o.status', '=', 2)
-            ->where('hs.hospital_id', '=', $hospital->id)
+            ->where('o.hospital_id', '=', $hospital->id)
             ->when($criteriaConditions, function ($query) use ($criteriaConditions) {
                 return $this->criteriaConditionService->applyConditions($query, $criteriaConditions);
             })
