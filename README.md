@@ -10,7 +10,8 @@ The **Backend** of the Hospital Management System (HMS) is built using the **Lar
   - Register, login, and authenticate users.
   - Handle user roles: Guest, Verified User, Doctor, Manager, and Admin.
   - Find clear information about hospital, its departments, doctors and services.
-  - Choose and pay for services using Stripe.
+  - Choose and pay for services using Stripe integration.
+  - Notifications for paid timeslots and referral codes.
   
 - **Doctor Features**:
   - Manage order history.
