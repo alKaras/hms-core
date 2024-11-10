@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Hospital\HospitalDepartments;
 use Exception;
 use Illuminate\Http\Request;
 use App\Imports\DepartmentImport;
@@ -21,6 +22,31 @@ class DepartmentController extends Controller
     {
         $department = Department::with('content')->get();
         return DepartmentResource::collection($department);
+    }
+
+    public function getUnassignedDepartments(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'hospital_id' => ['required', 'exists:hospital,id']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $hospitalId = $request->input('hospital_id');
+
+        $assignedDepartments = HospitalDepartments::where('hospital_id', $hospitalId)->pluck('department_id')->toArray();
+        $unassignedDepartments = Department::whereNotIn('id', $assignedDepartments)->get();
+
+        $unassignedDepartments->load('content');
+        return response()->json([
+            'status' => 'ok',
+            'data' => DepartmentResource::collection($unassignedDepartments),
+        ]);
     }
 
     /**
@@ -62,7 +88,7 @@ class DepartmentController extends Controller
 
             if (!$hospital) {
                 return response()->json([
-                    'status' => 'failure',
+                    'status' => 'error',
                     'message' => "No hospitals for provided id{$request->hospital_id}"
                 ], 404);
             }
@@ -77,7 +103,7 @@ class DepartmentController extends Controller
 
         } else {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'An error occurred while creating department',
             ], 500);
         }
@@ -114,7 +140,7 @@ class DepartmentController extends Controller
         }
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Departments imported successfully'
         ]);
     }
@@ -128,7 +154,7 @@ class DepartmentController extends Controller
 
         if (!$department) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for given department'
             ], 404);
         }
@@ -146,7 +172,7 @@ class DepartmentController extends Controller
 
         if (!$department) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for given department'
             ], 404);
         }
@@ -187,7 +213,7 @@ class DepartmentController extends Controller
         $department = Department::with('content')->find($id);
         if (!$department) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for given department'
             ], 404);
         }
@@ -197,7 +223,7 @@ class DepartmentController extends Controller
         $department->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => 'ok',
             'message' => 'Department and related tables deleted successfully'
         ]);
     }

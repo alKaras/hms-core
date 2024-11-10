@@ -3,8 +3,9 @@
 namespace App\Models\Cart;
 
 use App\Models\User\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Hospital\Hospital;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Cart extends Model
 {
@@ -12,6 +13,7 @@ class Cart extends Model
 
     protected $fillable = [
         'user_id',
+        'hospital_id',
         'session_id',
         'expired_at',
     ];
@@ -24,5 +26,10 @@ class Cart extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function hospital()
+    {
+        return $this->belongsTo(Hospital::class);
     }
 }

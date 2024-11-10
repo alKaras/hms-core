@@ -9,6 +9,7 @@ use App\Models\TimeSlots;
 use Illuminate\Http\Request;
 use App\Models\Doctor\Doctor;
 use App\Enums\TimeslotStateEnum;
+use App\Models\Hospital\Hospital;
 use Barryvdh\DomPDF\Facade as PDF;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\TimeSlotsResource;
@@ -32,7 +33,7 @@ class TimeSlotsController extends Controller
         $timeslot = TimeSlots::find($id);
         if (!$timeslot) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "An error occurred while trying to find timeslot for id$id",
             ], 404);
         }
@@ -53,7 +54,7 @@ class TimeSlotsController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'Check provided data',
                 'errors' => $validator->errors(),
             ], 422);
@@ -63,7 +64,7 @@ class TimeSlotsController extends Controller
         $doctor = Doctor::find($request->doctor_id);
         if (!$doctor) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "An error occurred while searching for doctor ID#{$request->doctor_id}"
             ]);
         }
@@ -101,7 +102,7 @@ class TimeSlotsController extends Controller
     public function showFreeSlots(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'service_id' => ['exists:service,id'],
+            'service_id' => ['exists:services,id'],
             'doctor_id' => ['exists:doctors,id']
         ]);
 
@@ -116,19 +117,21 @@ class TimeSlotsController extends Controller
         $serviceId = $request->input('service_id');
         $doctorId = $request->input('doctor_id');
 
-        $freeSlotsCounter = DB::table('time_slots')
-            ->where('start_time', '>', Carbon::now())
+        $freeSlotsCounter = DB::table('time_slots as ts')
+            ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
+            ->where('ts.start_time', '>', Carbon::now())
             ->when($serviceId, function ($query) use ($serviceId) {
-                return $query->whereNotNull('service_id');
+                return $query->where('ts.service_id', $serviceId);
             })
             ->when($doctorId, function ($query) use ($doctorId) {
-                return $query->whereNotNull('doctor_id');
+                return $query->where('ts.doctor_id', $doctorId);
             })
-            ->groupBy('service_id', 'DATE(start_time)')
+            ->groupBy('ts.service_id', DB::raw(value: "DATE(ts.start_time)"))
             ->selectRaw("
-            service_id as `serviceId`,
-            DATE(start_time) as `date`,
-            COUNT(*) as `free_slots`
+            ts.service_id as `serviceId`,
+            s.name as `serviceName`,
+            DATE(ts.start_time) as `date`,
+            COUNT(ts.id) as `free_slots`
         ")->get();
 
         return response()->json([
@@ -138,7 +141,7 @@ class TimeSlotsController extends Controller
     }
 
     /**
-     * Display timeslots by serviceId
+     * Display timeslots by serviceId | not used at frontend
      * @param \Illuminate\Http\Request $request
      * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
@@ -151,7 +154,7 @@ class TimeSlotsController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'Check provided data',
                 'errors' => $validator->errors(),
             ]);
@@ -190,76 +193,45 @@ class TimeSlotsController extends Controller
             'date' => ['required', 'date_format:Y-m-d'],
             'service_id' => ['exists:services,id'],
             'doctor_id' => ['exists:doctors,id'],
+            'hospital_id' => ['exists:hospital,id', 'required'],
             'freeOnly' => ['numeric'],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'Invalid data',
                 'errors' => $validator->errors(),
             ], 422);
         }
 
         $date = $request->input('date');
-        $service = HServices::find($request->input('service_id'));
-        $doctor = Doctor::find($request->input('doctor_id'));
-        $timeslots = TimeSlots::byDate($date)->get();
+        $serviceId = $request->input('service_id');
+        $hospitalId = $request->input('hospital_id');
+        $doctorId = $request->input('doctor_id');
         $freeOnly = $request->input('freeOnly');
+
+        $timeslots = TimeSlots::byDate($date)
+            ->whereHas('doctor.user', function ($query) use ($hospitalId) {
+                $query->where('hospital_id', $hospitalId);
+            })
+            ->when($serviceId, function ($query, $serviceId) {
+                $query->where('service_id', $serviceId);
+            })
+            ->when($doctorId, function ($query) use ($doctorId) {
+                $query->where('doctor_id', $doctorId);
+            })
+            ->when($freeOnly, function ($query) {
+                $query->where('state', TimeslotStateEnum::FREE);
+            })
+            ->with(['service.department.content', 'doctor.user', 'service.hospitals.content'])
+            ->get();
 
         if ($timeslots->isEmpty()) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'data' => [],
             ], 200);
-        }
-
-        if (null !== $service) {
-            $serviceTimeSlots = $timeslots->filter(fn($timeslot) => $timeslot->service_id == $service->id);
-
-            if ($freeOnly) {
-                $filteredServicesSlots = $serviceTimeSlots->filter(fn($timeslot) => $timeslot->state === TimeslotStateEnum::FREE);
-
-                if (!empty($filteredServicesSlots)) {
-                    return response()->json([
-                        'status' => 'ok',
-                        'data' => TimeSlotsResource::collection($filteredServicesSlots)
-                    ]);
-                } else {
-                    return response()->json([
-                        'status' => 'failure',
-                        'data' => []
-                    ], 404);
-                }
-            }
-
-            return response()->json([
-                'status' => 'ok',
-                'data' => TimeSlotsResource::collection($serviceTimeSlots),
-            ]);
-        } elseif (null !== $doctor) {
-            $doctorTimeSlots = $timeslots->filter(fn($timeslot) => $doctor->id == $timeslot->doctor_id);
-
-            if ($freeOnly) {
-                $filteredDoctorSlots = $doctorTimeSlots->filter(fn($timeslot) => $timeslot->state === TimeslotStateEnum::FREE);
-
-                if (!empty($filteredDoctorSlots)) {
-                    return response()->json([
-                        'status' => 'ok',
-                        'data' => TimeSlotsResource::collection($filteredDoctorSlots),
-                    ]);
-                } else {
-                    return response()->json([
-                        'status' => 'failure',
-                        'data' => [],
-                    ], 404);
-                }
-            }
-
-            return response()->json([
-                'status' => 'ok',
-                'data' => TimeSlotsResource::collection($doctorTimeSlots),
-            ]);
         }
 
         return response()->json([
@@ -283,7 +255,7 @@ class TimeSlotsController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There are issues with provided data',
                 'errors' => $validator->errors(),
             ], 500);
@@ -321,7 +293,7 @@ class TimeSlotsController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'An error occurred during validation of provided data',
                 'errors' => $validator->errors(),
             ], 422);
@@ -366,7 +338,7 @@ class TimeSlotsController extends Controller
         $timeSlot = TimeSlots::find($id);
         if (!$timeSlot) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'An error occurred while trying to find provided time_slot id',
             ], 404);
         }
@@ -380,7 +352,7 @@ class TimeSlotsController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'An error occurred in provided data',
                 'errors' => $validator->errors(),
             ]);
@@ -425,7 +397,7 @@ class TimeSlotsController extends Controller
         $timeSlot = TimeSlots::find($id);
         if (!$timeSlot) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no data for provided timeslot',
             ], 404);
         }

@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\DoctorResource;
-use App\Imports\DoctorImport;
-use App\Models\Department\Department;
-use App\Models\Doctor\Doctor;
-use App\Models\HServices;
-use App\Models\Role;
-use App\Models\User\User;
-use App\Notifications\DoctorCredentialsNotification;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
 use Validator;
+use App\Models\Role;
+use App\Models\HServices;
+use App\Models\User\User;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Imports\DoctorImport;
+use App\Models\Doctor\Doctor;
+use App\Models\Hospital\Hospital;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Department\Department;
+use App\Http\Resources\DoctorResource;
+use App\Notifications\DoctorCredentialsNotification;
 
 class DoctorController extends Controller
 {
@@ -32,10 +34,12 @@ class DoctorController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function showByServiceId(Request $request)
+    public function showByService(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'service_id' => ['required', 'exists:services,id']
+            'service_id' => ['required', 'exists:services,id'],
+            'hospital_id' => ['required', 'exists:hospital,id'],
+            'checkByServiceDepartment' => ['numeric'],
         ]);
 
         if ($validator->fails()) {
@@ -46,9 +50,45 @@ class DoctorController extends Controller
             ], 422);
         }
 
-        $service = HServices::find($request->input('service_id'));
+        $serviceId = $request->input('service_id');
+        $hospitalId = $request->input('hospital_id');
+        $checkByServiceDepartment = (bool) $request->input('checkByServiceDepartment') ?? false;
 
-        $doctors = $service->doctors;
+        if ($checkByServiceDepartment) {
+            $doctors = DB::table('services as s')
+                ->leftJoin('doctor_departments as ddep', 'ddep.department_id', '=', 's.department_id')
+                ->leftJoin('doctors as d', 'd.id', '=', 'ddep.doctor_id')
+                ->leftJoin('users as u', 'u.id', '=', 'd.user_id')
+                ->where('u.hospital_id', '=', (int) $hospitalId)
+                ->where('s.id', '=', $serviceId)->get();
+
+            return response()->json([
+                'status' => 'ok',
+                'data' => $doctors->filter(function ($doctor) {
+                    return $doctor->hidden === 0;
+                })
+                    ->map(function ($doctor) {
+                        return [
+                            'doctorId' => $doctor->doctor_id,
+                            'name' => $doctor->name,
+                            'surname' => $doctor->surname,
+                            'email' => $doctor->email,
+                            'specialization' => $doctor->specialization,
+                        ];
+                    })
+            ]);
+
+        }
+
+        $doctors = Doctor::whereHas('services', function ($query) use ($serviceId) {
+            $query->where('service_id', $serviceId);
+        })
+            ->whereHas('user', function ($query) use ($hospitalId) {
+                $query->where('hospital_id', $hospitalId);
+            })
+            ->with('user')
+            ->get();
+
         return response()->json([
             'status' => 'ok',
             'data' => $doctors->filter(function ($doctor) {
@@ -119,7 +159,7 @@ class DoctorController extends Controller
         $existedDoctor = Doctor::where('user_id', $user->id)->first();
         if ($existedDoctor) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "The doctor for this user id {$user->id} has already been created"
             ], 500);
         }
@@ -197,7 +237,7 @@ class DoctorController extends Controller
         $doctor = Doctor::find($id);
         if (!$doctor) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "Cannot find any doctor for provided id#$id",
             ]);
         }
@@ -212,7 +252,7 @@ class DoctorController extends Controller
         $doctor = Doctor::find($id);
         if (!$doctor) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "Cannot find any doctors for provided id #$id"
             ]);
         }
@@ -260,12 +300,16 @@ class DoctorController extends Controller
         $doctor = Doctor::find($id);
         if (!$doctor) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => "Cannot find any doctor for provided id#$id",
             ]);
         }
 
+        $doctor->user->hospital_id = null;
+        $doctor->user->save();
+
         $doctor->departments()->detach();
+        $doctor->services()->detach();
         $doctor->delete();
 
         return response()->json([

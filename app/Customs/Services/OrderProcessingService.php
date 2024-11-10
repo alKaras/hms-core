@@ -9,6 +9,7 @@ use App\Models\User\User;
 use App\Models\Order\Order;
 use Illuminate\Http\Request;
 use App\Enums\TimeslotStateEnum;
+use App\Models\Hospital\Hospital;
 use App\Models\Order\OrderPayment;
 use App\Models\Order\OrderPaymentLog;
 use App\Notifications\TimeSlotConfirmationNotification;
@@ -20,9 +21,10 @@ class OrderProcessingService
     public function checkoutProcessing()
     {
         $user = auth()->user();
-        Stripe::setApiKey(env('STRIPE_SECRET'));
 
         $cart = Cart::where("user_id", $user->id)->with('items')->first();
+
+        Stripe::setApiKey(env('STRIPE_SECRET'));
         if (!$cart || $cart->items->isEmpty()) {
             return response()->json(['message' => 'Cart is empty'], 404);
         }
@@ -33,6 +35,7 @@ class OrderProcessingService
 
         $order = Order::create([
             'user_id' => $user->id,
+            'hospital_id' => $cart->hospital_id,
             'sum_total' => $totalAmount,
             'sum_subtotal' => $subtotalAmount,
             'status' => 1, //pending
@@ -192,7 +195,7 @@ class OrderProcessingService
 
         if (!$order) {
             return response()->json([
-                'status' => 'failure',
+                'status' => 'error',
                 'message' => 'There is no orders by provided id',
             ], 404);
         }

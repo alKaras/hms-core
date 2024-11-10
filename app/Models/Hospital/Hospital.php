@@ -2,12 +2,15 @@
 
 namespace App\Models\Hospital;
 
-use App\Models\Department\Department;
-use App\Models\HospitalReview;
+use App\Models\Cart\Cart;
+use App\Models\Doctor\Doctor;
 use App\Models\HServices;
 use App\Models\User\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Order\Order;
+use App\Models\HospitalReview;
+use App\Models\Department\Department;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Hospital extends Model
 {
@@ -35,7 +38,7 @@ class Hospital extends Model
         return $this->belongsToMany(HServices::class, 'hospital_services', 'hospital_id', 'service_id');
     }
 
-    public function managers()
+    public function workers()
     {
         return $this->hasMany(User::class);
     }
@@ -43,5 +46,15 @@ class Hospital extends Model
     public function reviews()
     {
         return $this->hasMany(HospitalReview::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
     }
 }

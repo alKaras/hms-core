@@ -32,123 +32,23 @@ use App\Http\Controllers\Api\Profile\PasswordController;
 //});
 
 require __DIR__ . '/auth.php';
+require __DIR__ . '/hospital.php';
+require __DIR__ . '/user.php';
+require __DIR__ . '/service.php';
+require __DIR__ . '/doctor.php';
+require __DIR__ . '/department.php';
+require __DIR__ . '/timeslot.php';
+
 
 Route::post('/webhook', [OrderController::class, 'stripeHookHandler']);
 Route::post('/checkout/cancel', [OrderController::class, 'cancel']);
 Route::post('/order/get', [FeedController::class, 'getOrderByFilter']);
 Route::post('/report/get', [FeedController::class, 'getReportByFilter']);
 Route::post('/order/sendconfirmation', [OrderController::class, 'sendOrderConfirmationMail']);
+
 /**
  * Roles routes api/roles
  */
 Route::prefix('roles')->group(function () {
     Route::get('/search', [RoleController::class, 'search']);
-});
-
-/**
- * Hospital routes api/hospital
- */
-Route::prefix('hospital')->group(function () {
-    Route::get('fetch', [HospitalController::class, 'index']);
-    Route::get('fetch/{id}', [HospitalController::class, 'show']);
-    Route::get('/fetch/{id}/departments', [HospitalController::class, 'showHospitalDepartments']);
-
-    Route::post('/fetch/doctors', [HospitalController::class, 'fetchDepartmentDoctors']);
-
-    Route::post('/fetch/services', [HospitalController::class, 'showHospitalServices']);
-
-    Route::post('/rating', [HospitalController::class, 'getAverageRatingForSpecificHospital']);
-
-    Route::post('create', [HospitalController::class, 'store']);
-    Route::put('edit/{id}', [HospitalController::class, 'update']);
-    Route::delete('delete/{id}', [HospitalController::class, 'destroy']);
-});
-
-/**
- * User routes api/user
- */
-Route::prefix('user')->group(function () {
-    Route::get('fetch', [UserController::class, 'fetchAll']);
-    Route::post('create', [UserController::class, 'store']);
-    Route::get('fetch/{id}', [UserController::class, 'show']);
-    Route::put('edit/{id}', [UserController::class, 'update']);
-    Route::post('attach-role/{id}', [UserController::class, 'attachRole']);
-    Route::post('detach-role/{id}', [UserController::class, 'detachRole']);
-    Route::delete('delete/{id}', [UserController::class, 'destroy']);
-});
-
-/**
- * Services routes api/services
- */
-
-Route::prefix('services')->group(function () {
-    Route::post('/create', [HServicesController::class, 'store']);
-    Route::post('/import', [HServicesController::class, 'import']);
-    Route::get('/fetch', [HServicesController::class, 'index']);
-    Route::get('/fetch/{id}', [HServicesController::class, 'show']);
-    Route::post('/getbydoctor', [HServicesController::class, 'getServicesByDoctorId']);
-    Route::delete('/delete/{id}', [HServicesController::class, 'destroy']);
-});
-
-/**
- * Doctors routes api/doctors
- */
-Route::prefix('doctors')->group(function () {
-    Route::get('/fetch', [DoctorController::class, 'index']);
-    Route::get('/fetch/{id}', [DoctorController::class, 'show']);
-    Route::post('/create', [DoctorController::class, 'store']);
-    Route::post('/getbyservice', [DoctorController::class, 'showByServiceId']);
-    Route::put('/edit/{id}', [DoctorController::class, 'update']);
-    Route::post('/import', [DoctorController::class, 'importDoctors']);
-    Route::delete('/delete/{id}', [DoctorController::class, 'destroy']);
-});
-
-/**
- * Department routes api/department
- */
-Route::prefix('/department')->group(function () {
-    Route::get('/fetch', [DepartmentController::class, 'index']);
-    Route::get('/fetch/{id}', [DepartmentController::class, 'show']);
-    Route::post('/create', [DepartmentController::class, 'store']);
-    Route::put('/edit/{id}', [DepartmentController::class, 'update']);
-    Route::post('/import', [DepartmentController::class, 'import']);
-    Route::delete('/delete/{id}', [DepartmentController::class, 'destroy']);
-});
-
-/**
- * UserReferral routes api/userreferral
- */
-Route::prefix('/userreferral')->group(function () {
-    Route::get('/fetch/{id}', [UserReferralController::class, 'show']);
-    Route::post('/create', [UserReferralController::class, 'store']);
-    Route::delete('/delete/{id}', [UserReferralController::class, 'destroy']);
-});
-
-/**
- * TimeSlots routes api/timeslots
- */
-Route::prefix('/timeslots')->group(function () {
-    Route::get('/fetch', [TimeSlotsController::class, 'index']);
-    Route::get('/{id}/getbyid', [TimeSlotsController::class, 'show']);
-    Route::post('/getbydoctor', [TimeSlotsController::class, 'showByDoctor']);
-    Route::post('/getbyservice', [TimeSlotsController::class, 'showByService']);
-    Route::post('/getbydate', [TimeSlotsController::class, 'showByDate']);
-    Route::post('/free/get', [TimeSlotsController::class, 'showFreeSlots']);
-    Route::post('/generate', [TimeSlotsController::class, 'generateTimeSlots']);
-    Route::post('/create', [TimeSlotsController::class, 'store']);
-    Route::put('/{id}/edit', [TimeSlotsController::class, 'update']);
-    Route::delete('/{id}/destroy', [TimeSlotsController::class, 'destroy']);
-});
-
-/**
- * Hospital Reviews routes api/hospital/reviews
- */
-Route::prefix('/hospital/reviews')->group(function () {
-    Route::post('/get', [HospitalReviewController::class, 'index']);
-    Route::post('/getcount', [HospitalReviewController::class, 'getAmountOfReviewsByHospital']);
-});
-
-Route::prefix('/hospital/reviews')->middleware(['jwt.auth'])->group(function () {
-    Route::post('/create', [HospitalReviewController::class, 'store']);
-    Route::delete('/item/{id}/remove', [HospitalReviewController::class, 'destroy']);
 });

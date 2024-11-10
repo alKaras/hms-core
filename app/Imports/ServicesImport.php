@@ -20,39 +20,61 @@ class ServicesImport implements ToModel, WithHeadingRow
      */
     public function model(array $row)
     {
-        $department = Department::whereHas("content", function ($query) use ($row) {
-            $query->where('title', trim($row['department_title']));
-        })->first();
 
         $hospital = Hospital::whereHas('content', function ($query) use ($row) {
             $query->where('title', trim($row['hospital_title']));
         })->first();
 
+
+        $dp = Department::whereHas("content", function ($query) use ($row) {
+            $query->where('title', trim($row['department_title']));
+        })->first();
+
+        $department = $dp->hospitals()->where('hospital_id', $hospital->id)->first();
+
+
         $user = User::where('email', $row['doctor_email'])
             ->first();
 
-        $doctor = Doctor::where('user_id', $user->id)->first();
+        $doctor = Doctor::where('user_id', $user->id)->where('hospital_id', '=', $hospital->id)->first();
 
         if (!$department || !$hospital || !$doctor) {
             throw new Exception('Error occurred while finding hospital doctor or department');
         }
 
-        $service = HServices::create([
-            'name' => $row['name'],
-            'description' => $row['description'],
-            'department_id' => $department->id
-        ]);
+        $existedHospitalService = HServices::where('name', $row['name'])->first();
 
-        $service->hospitals()->attach($hospital->id, [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        if ($existedHospitalService) {
 
-        $service->doctors()->attach($doctor->id, [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            $existedHospitalService->hospitals()->attach($hospital->id, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-        return $service;
+            $existedHospitalService->doctors()->attach($doctor->id, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+
+        } else {
+            $newService = HServices::create([
+                'name' => $row['name'],
+                'description' => $row['description'],
+                'department_id' => $dp->id,
+            ]);
+
+            $newService->hospitals()->attach($hospital->id, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $newService->doctors()->attach($doctor->id, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return $newService;
+        }
     }
 }

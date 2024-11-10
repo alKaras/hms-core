@@ -2,14 +2,15 @@
 
 namespace App\Customs\Services\Feeds;
 
-use App\Customs\Services\CriteriaCondition\CriteriaConditionService;
 use App\Models\Order\Order;
+use App\Models\Doctor\Doctor;
 use App\Models\Hospital\Hospital;
 use App\Models\Order\OrderPayment;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order\OrderServices;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\OrderServiceResource;
+use App\Customs\Services\CriteriaCondition\CriteriaConditionService;
 
 class OrderFeedService
 {
@@ -138,18 +139,18 @@ class OrderFeedService
                         'services' => OrderServiceResource::collection(resource: $orderServices),
                     ];
                 }),
-                'meta' => [
+                'meta' => $limit === null ? [
                     'current_page' => $orders->currentPage(),
                     'per_page' => $orders->perPage(),
                     'total' => $orders->total(),
                     'last_page' => $orders->lastPage(),
-                ],
-                'links' => [
+                ] : null,
+                'links' => $limit === null ? [
                     'first' => $orders->url(1),
                     'last' => $orders->url($orders->lastPage()),
                     'prev' => $orders->previousPageUrl(),
                     'next' => $orders->nextPageUrl(),
-                ]
+                ] : null
             ]);
         } else {
             return response()->json([
@@ -176,9 +177,8 @@ class OrderFeedService
                 ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
                 ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
                 ->leftJoin('department_content as dc', 'dc.department_id', '=', 's.department_id')
-                ->leftJoin('hospital_departments as hd', 'hd.department_id', '=', 's.department_id')
                 ->where('o.status', 2)
-                ->where('hd.hospital_id', $hospital->id)
+                ->where('o.hospital_id', $hospital->id)
                 ->groupBy('o.id', 'osr.status_name', 'op.payment_id')
                 ->selectRaw("
                 o.id as orderId,
@@ -240,11 +240,11 @@ class OrderFeedService
             ->leftJoin('users as u', 'u.id', '=', 'o.user_id')
             ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
             ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
-            ->leftJoin('hospital_services as hs', 'hs.service_id', '=', 's.id')
-            ->leftJoin('hospital as h', 'h.id', '=', 'hs.hospital_id')
+            // ->leftJoin('hospital_services as hs', 'hs.service_id', '=', 's.id')
+            ->leftJoin('hospital as h', 'h.id', '=', 'o.hospital_id')
             ->leftJoin('hospital_content as hc', 'hc.hospital_id', '=', 'h.id')
             ->when($hospitalId, function ($query) use ($hospitalId) {
-                return $query->whereNotNull('hc.hospital_id');
+                return $query->where('o.hospital_id', '=', $hospitalId);
             })
             ->when($criteriaCondition, function ($query) use ($criteriaCondition) {
                 return $this->criteriaConditionService->applyConditions($query, $criteriaCondition);
