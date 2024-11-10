@@ -34,7 +34,7 @@ class DepartmentController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => $validator->errors()->first(),
-            ]);
+            ], 422);
         }
 
         $hospitalId = $request->input('hospital_id');
@@ -47,53 +47,6 @@ class DepartmentController extends Controller
             'status' => 'ok',
             'data' => DepartmentResource::collection($unassignedDepartments),
         ]);
-    }
-
-    /**
-     * Attach existed departments to the hospital
-     * @param \Illuminate\Http\Request $request
-     * @return mixed|\Illuminate\Http\JsonResponse
-     */
-    public function attachExistedDepartments(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'hospital_id' => ['required', 'exists:hospital,id'],
-            'department_ids.*' => ['required', 'exists:department,id'],
-            'department_ids' => ['required', 'array']
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $validator->errors()->first(),
-            ], 422);
-        }
-
-        $departmentIds = $request->input('department_ids');
-
-        // $departments = Department::whereIn('id', $request->department_id)->get();
-
-        foreach ($departmentIds as $department) {
-            DB::table('hospital_departments')->insert([
-                'hospital_id' => $request->hospital_id,
-                'department_id' => $department,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
-
-        if (HospitalDepartments::where('hospital_id', '=', $request->hospital_id)->count() > 0) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Departments attached to the hospital successfully',
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Something went wrong'
-            ], 500);
-        }
-
     }
 
     /**

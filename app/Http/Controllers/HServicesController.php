@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\ServicesResource;
-use App\Imports\ServicesImport;
-use App\Models\Doctor\Doctor;
-use App\Models\Hospital\Hospital;
+use App\Models\Doctor\DoctorServices;
 use App\Models\HServices;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Doctor\Doctor;
+use App\Imports\ServicesImport;
+use App\Models\Hospital\Hospital;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Resources\ServicesResource;
+use Illuminate\Support\Facades\Validator;
 
 class HServicesController extends Controller
 {
@@ -172,15 +174,47 @@ class HServicesController extends Controller
     }
 
     /**
-     * Update 
+     * Attach existed by service department doctors to the service
      */
-    public function update(Request $request, $id)
+    public function attachDoctors(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'hospital_id' => ['required', 'exists:hospital,id'],
+            'service_id' => ['required', 'exists:services,id'],
             'doctors' => ['required', 'array'],
-            'doctors.*' => ['required', '']
+            'doctors.*' => ['required', 'numeric']
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data is incorrect',
+                'error' => $validator->errors()
+            ], 422);
+        }
+
+        $serviceId = $request->input('service_id');
+        $doctorIds = $request->input('doctors');
+
+        foreach ($doctorIds as $doctor) {
+            DB::table("doctor_services")->insert([
+                'service_id' => $serviceId,
+                'doctor_id' => $doctor,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        if (DoctorServices::where('service_id', '=', $serviceId)->count() > 0) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => "Doctors attached to the service {$serviceId} successfully"
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Something went wrong',
+            ], 500);
+        }
     }
 
     /**

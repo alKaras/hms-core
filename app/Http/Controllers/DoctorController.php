@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Imports\DoctorImport;
 use App\Models\Doctor\Doctor;
 use App\Models\Hospital\Hospital;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Department\Department;
 use App\Http\Resources\DoctorResource;
@@ -33,11 +34,12 @@ class DoctorController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function showByServiceId(Request $request)
+    public function showByService(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'service_id' => ['required', 'exists:services,id'],
-            'hospital_id' => ['required', 'exists:hospital,id']
+            'hospital_id' => ['required', 'exists:hospital,id'],
+            'checkByServiceDepartment' => ['numeric'],
         ]);
 
         if ($validator->fails()) {
@@ -48,13 +50,44 @@ class DoctorController extends Controller
             ], 422);
         }
 
-        $service = HServices::find($request->input('service_id'))
-            ->doctors()
-            ->where('hospital_id', '=', $request->hospital_id)
-            ->get();
-        // $hospital = Hospital::find($request->input('hospital_id'));
+        $serviceId = $request->input('service_id');
+        $hospitalId = $request->input('hospital_id');
+        $checkByServiceDepartment = (bool) $request->input('checkByServiceDepartment') ?? false;
 
-        $doctors = $service;
+        if ($checkByServiceDepartment) {
+            $doctors = DB::table('services as s')
+                ->leftJoin('doctor_departments as ddep', 'ddep.department_id', '=', 's.department_id')
+                ->leftJoin('doctors as d', 'd.id', '=', 'ddep.doctor_id')
+                ->leftJoin('users as u', 'u.id', '=', 'd.user_id')
+                ->where('u.hospital_id', '=', (int) $hospitalId)
+                ->where('s.id', '=', $serviceId)->get();
+
+            return response()->json([
+                'status' => 'ok',
+                'data' => $doctors->filter(function ($doctor) {
+                    return $doctor->hidden === 0;
+                })
+                    ->map(function ($doctor) {
+                        return [
+                            'doctorId' => $doctor->doctor_id,
+                            'name' => $doctor->name,
+                            'surname' => $doctor->surname,
+                            'email' => $doctor->email,
+                            'specialization' => $doctor->specialization,
+                        ];
+                    })
+            ]);
+
+        }
+
+        $doctors = Doctor::whereHas('services', function ($query) use ($serviceId) {
+            $query->where('service_id', $serviceId);
+        })
+            ->whereHas('user', function ($query) use ($hospitalId) {
+                $query->where('hospital_id', $hospitalId);
+            })
+            ->with('user')
+            ->get();
 
         return response()->json([
             'status' => 'ok',

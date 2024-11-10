@@ -10,6 +10,7 @@ use App\Models\Hospital\Hospital;
 use App\Http\Resources\HospitalResource;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\DepartmentResource;
+use App\Models\Hospital\HospitalDepartments;
 
 class HospitalController extends Controller
 {
@@ -106,54 +107,67 @@ class HospitalController extends Controller
             ], 422);
         }
 
-        $hospital = Hospital::with(['services.doctors.user'])
-            ->where('id', $request->hospital_id)
-            ->first();
-        if (!$hospital) {
-            return response()->json(['message' => 'Hospital not found'], 404);
-        }
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+
+        $hospitalId = $request->input('hospital_id');
 
         $servicesData = DB::table('hms.hospital_services as hs')
             ->join('hms.services as s', 'hs.service_id', '=', 's.id')
             ->leftJoin('hms.doctor_services as ds', 's.id', '=', 'ds.service_id')
             ->leftJoin('hms.doctors as d', 'ds.doctor_id', '=', 'd.id')
-            ->leftJoin('hms.users as u', function ($join) {
-                $join->on('d.user_id', '=', 'u.id')
-                    ->whereColumn('u.hospital_id', '=', 'hs.hospital_id');
-            })
+            ->leftJoin('hms.users as u', 'd.user_id', '=', 'u.id')
             ->leftJoin("department as dep", 'dep.id', '=', 's.department_id')
             ->leftJoin("department_content as dc", 'dc.department_id', '=', 'dep.id')
-            ->where('u.hospital_id', $hospital->id)
+            ->where('hs.hospital_id', $hospitalId)
+            ->where(function ($query) use ($hospitalId) {
+                $query->where('u.hospital_id', $hospitalId)
+                    ->orWhereNull('u.hospital_id');
+            })
             ->selectRaw(
                 's.id as service_id, 
-                s.name as service_name, 
-                IFNULL(s.description, "") as description,
-                dc.title as department,
-                JSON_ARRAYAGG(
-                    JSON_OBJECT(
-                        "doctor_id", d.id,
-                        "specialization", d.specialization,
-                        "name", CONCAT(u.name, " ", u.surname),
-                        "email", u.email
-                    )
-                ) as doctorsInfo'
+            s.name as service_name, 
+            IFNULL(s.description, "") as description,
+            dc.title as department,
+            IF (u.hospital_id is not null,
+            JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    "doctor_id", d.id,
+                    "specialization", d.specialization,
+                    "name", CONCAT(u.name, " ", u.surname),
+                    "email", u.email
+                )
+            ), JSON_ARRAY()) as doctorsInfo'
             )
-            ->groupBy('s.id', 's.name', 'dc.title')
-            ->get();
+            ->groupBy('s.id', 's.name', 'dc.title', 'u.hospital_id')
+            ->paginate($perPage, ['*'], 'page', $page);
 
+
+        $servicesData->getCollection()->transform(function ($service) {
+            return [
+                'id' => $service->service_id,
+                'service_name' => $service->service_name,
+                'description' => $service->description,
+                'department' => $service->department,
+                'doctorInfo' => json_decode($service->doctorsInfo, true)
+            ];
+        });
 
         return response()->json([
             'status' => 'ok',
-            'services' => collect($servicesData)->map(function ($service) {
-                return [
-                    'id' => $service->service_id,
-                    'service_name' => $service->service_name,
-                    'description' => $service->description,
-                    'department' => $service->department,
-                    'doctorInfo' => json_decode($service->doctorsInfo, true),
-
-                ];
-            })
+            'services' => $servicesData->items(),
+            'meta' => [
+                'current_page' => $servicesData->currentPage(),
+                'per_page' => $servicesData->perPage(),
+                'total' => $servicesData->total(),
+                'last_page' => $servicesData->lastPage(),
+            ],
+            'links' => [
+                'first' => $servicesData->url(1),
+                'last' => $servicesData->url($servicesData->lastPage()),
+                'prev' => $servicesData->previousPageUrl(),
+                'next' => $servicesData->nextPageUrl(),
+            ]
         ]);
     }
 
@@ -314,6 +328,53 @@ class HospitalController extends Controller
                 'message' => "There is no data for provided id#{$request->hospital_id}"
             ], 404);
         }
+    }
+
+    /**
+     * Attach existed departments to the hospital
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function attachExistedDepartments(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'hospital_id' => ['required', 'exists:hospital,id'],
+            'department_ids.*' => ['required', 'exists:department,id'],
+            'department_ids' => ['required', 'array']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $departmentIds = $request->input('department_ids');
+
+        // $departments = Department::whereIn('id', $request->department_id)->get();
+
+        foreach ($departmentIds as $department) {
+            DB::table('hospital_departments')->insert([
+                'hospital_id' => $request->hospital_id,
+                'department_id' => $department,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        if (HospitalDepartments::where('hospital_id', '=', $request->hospital_id)->count() > 0) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Departments attached to the hospital successfully',
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Something went wrong'
+            ], 500);
+        }
+
     }
 
     /**

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\HospitalReviewController;
 
 
 /**
@@ -22,7 +23,7 @@ Route::prefix('hospital')->group(function () {
     Route::put('edit/{id}', [HospitalController::class, 'update']);
     Route::delete('delete/{id}', [HospitalController::class, 'destroy']);
 
-    Route::post('/department/attach', [DepartmentController::class, 'attachExistedDepartments']);
+    Route::post('/department/attach', [HospitalController::class, 'attachExistedDepartments']);
     Route::post('/department/list/unassigned', [DepartmentController::class, 'getUnassignedDepartments']);
 });
 

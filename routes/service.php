@@ -13,4 +13,6 @@ Route::prefix('services')->group(function () {
     Route::get('/fetch/{id}', [HServicesController::class, 'show']);
     Route::post('/getbydoctor', [HServicesController::class, 'getServicesByDoctorId']);
     Route::delete('/delete/{id}', [HServicesController::class, 'destroy']);
+
+    Route::post('/doctors/attach', [HServicesController::class, 'attachDoctors']);
 });
