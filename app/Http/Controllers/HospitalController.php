@@ -216,7 +216,11 @@ class HospitalController extends Controller
             if (!$department) {
                 return response()->json(['message' => 'Department not found in this hospital'], 404);
             }
-            $doctors = $department->doctors;
+            $doctors = $department->doctors()
+                ->whereHas('user', function ($query) use ($hospital) {
+                    $query->where('hospital_id', $hospital->id);
+                })
+                ->get();
 
             return response()->json([
                 'status' => 'ok',
