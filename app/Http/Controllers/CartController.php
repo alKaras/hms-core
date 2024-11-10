@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Customs\Services\OrderProcessingService;
 use Carbon\Carbon;
 use App\Models\Cart\Cart;
 use App\Models\TimeSlots;
@@ -11,6 +10,8 @@ use Illuminate\Http\Request;
 use App\Models\Cart\CartItems;
 use App\Enums\TimeslotStateEnum;
 use App\Models\Hospital\Hospital;
+use Illuminate\Support\Facades\Validator;
+use App\Customs\Services\OrderProcessingService;
 
 class CartController extends Controller
 {
@@ -102,6 +103,7 @@ class CartController extends Controller
         return response()->json([
             'id' => $cart->id,
             'user_id' => $cart->user_id,
+            'hospital_id' => $cart->hospital_id,
             'session_id' => $cart->session_id,
             'created_at' => Carbon::parse($cart->created_at),
             // 'items' => $cart->items,
@@ -140,11 +142,34 @@ class CartController extends Controller
         return response()->json(['message' => 'Item removed successfully']);
     }
 
-    public function cancelCart($id)
+    public function cancelCart(Request $request)
     {
-        $cart = Cart::find($id);
-        if (!$cart) {
-            return response()->json(['message' => 'Cart is not found'], 404);
+
+        $cartId = $request->input('cart_id', null);
+
+        if ($cartId !== null) {
+            $cart = Cart::find($cartId);
+            if (!$cart) {
+                return response()->json(['message' => 'Cart is not found'], 404);
+            }
+        } else {
+
+            $user = auth()->user();
+            $userRecord = User::find($user->id);
+
+            if ($userRecord) {
+                $cart = Cart::where("user_id", $user->id)->first();
+
+                if (!$cart) {
+                    return response()->json(['message' => 'Cart is not found'], 404);
+                }
+
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'There is no user for provided token',
+                ], 404);
+            }
         }
 
         foreach ($cart->items as $item) {
@@ -156,7 +181,6 @@ class CartController extends Controller
             }
 
         }
-
 
         $cart->items()->delete();
         $cart->delete();

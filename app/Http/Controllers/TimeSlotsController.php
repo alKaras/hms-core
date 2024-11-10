@@ -102,7 +102,7 @@ class TimeSlotsController extends Controller
     public function showFreeSlots(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'service_id' => ['exists:service,id'],
+            'service_id' => ['exists:services,id'],
             'doctor_id' => ['exists:doctors,id']
         ]);
 
@@ -117,19 +117,21 @@ class TimeSlotsController extends Controller
         $serviceId = $request->input('service_id');
         $doctorId = $request->input('doctor_id');
 
-        $freeSlotsCounter = DB::table('time_slots')
-            ->where('start_time', '>', Carbon::now())
+        $freeSlotsCounter = DB::table('time_slots as ts')
+            ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
+            ->where('ts.start_time', '>', Carbon::now())
             ->when($serviceId, function ($query) use ($serviceId) {
-                return $query->whereNotNull('service_id');
+                return $query->where('ts.service_id', $serviceId);
             })
             ->when($doctorId, function ($query) use ($doctorId) {
-                return $query->whereNotNull('doctor_id');
+                return $query->where('ts.doctor_id', $doctorId);
             })
-            ->groupBy('service_id', 'DATE(start_time)')
+            ->groupBy('ts.service_id', DB::raw(value: "DATE(ts.start_time)"))
             ->selectRaw("
-            service_id as `serviceId`,
-            DATE(start_time) as `date`,
-            COUNT(*) as `free_slots`
+            ts.service_id as `serviceId`,
+            s.name as `serviceName`,
+            DATE(ts.start_time) as `date`,
+            COUNT(ts.id) as `free_slots`
         ")->get();
 
         return response()->json([

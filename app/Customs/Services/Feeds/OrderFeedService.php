@@ -138,18 +138,18 @@ class OrderFeedService
                         'services' => OrderServiceResource::collection(resource: $orderServices),
                     ];
                 }),
-                'meta' => [
+                'meta' => $limit === null ? [
                     'current_page' => $orders->currentPage(),
                     'per_page' => $orders->perPage(),
                     'total' => $orders->total(),
                     'last_page' => $orders->lastPage(),
-                ],
-                'links' => [
+                ] : null,
+                'links' => $limit === null ? [
                     'first' => $orders->url(1),
                     'last' => $orders->url($orders->lastPage()),
                     'prev' => $orders->previousPageUrl(),
                     'next' => $orders->nextPageUrl(),
-                ]
+                ] : null
             ]);
         } else {
             return response()->json([
