@@ -137,6 +137,7 @@ class DoctorController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'password' => bcrypt($password),
+                'hospital_id' => $request->hospital_id,
             ]);
 
             $userRole = Role::where('title', 'user')->value('id');
@@ -164,11 +165,22 @@ class DoctorController extends Controller
             ], 500);
         }
 
+        if ($user->hospital_id !== $request->hospital_id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This user has already been linked to another hospital'
+            ], 500);
+        }
+
+
+
         $doctor = Doctor::create([
             'specialization' => $request->specialization,
-            'user_id' => $user->id,
-            'hospital_id' => $request->hospital_id,
+            'user_id' => $user->id
         ]);
+
+        //Attach user to hospital
+        $user->update(['hospital_id' => $request->hospital_id]);
 
         $departments = Department::whereHas('content', function ($query) use ($request) {
             $query->whereIn('title', $request->departments);

@@ -53,10 +53,20 @@ class DoctorImport implements ToModel, WithHeadingRow
             ], 500);
         }
 
+        if ($user->hospital_id !== $row['hospital_id']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The user has already been linked to another hospital'
+            ], 500);
+        }
+
         $doctor = Doctor::create([
             'user_id' => $user->id,
-            'specialization' => $row['specialization'],
-            'hospital_id' => $row['hospitalId'],
+            'specialization' => $row['specialization']
+        ]);
+
+        $user->update([
+            'hospital_id' => $row['hospital_id']
         ]);
 
         if (!empty($row['departments'])) {
