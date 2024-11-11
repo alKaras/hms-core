@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Customs\Services\CriteriaCondition\CriteriaConditionService;
+use Illuminate\Http\Request;
+use App\Exports\ReportExport;
+use App\Enums\OrderFiltersEnum;
+use App\Enums\ReportFiltersEnum;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 use App\Customs\Services\Feeds\OrderFeedService;
 use App\Customs\Services\Feeds\ReportFeedService;
-use App\Enums\ReportFiltersEnum;
-use Illuminate\Http\Request;
-use App\Enums\OrderFiltersEnum;
-use Illuminate\Support\Facades\Validator;
+use App\Customs\Services\CriteriaCondition\CriteriaConditionService;
 
 class FeedController extends Controller
 {
@@ -177,5 +179,23 @@ class FeedController extends Controller
             default:
                 return response()->json(['status' => 'error', 'message' => 'Check provided filter'], 404);
         }
+    }
+
+    public function downloadReport(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'data' => ['required']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $data = $request->input('data');
+
+        return Excel::download(new ReportExport($data), 'hospital-report.xlsx');
     }
 }

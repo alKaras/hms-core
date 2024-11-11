@@ -44,6 +44,7 @@ Route::post('/webhook', [OrderController::class, 'stripeHookHandler']);
 Route::post('/checkout/cancel', [OrderController::class, 'cancel']);
 Route::post('/order/get', [FeedController::class, 'getOrderByFilter']);
 Route::post('/report/get', [FeedController::class, 'getReportByFilter']);
+Route::post('/report/render', [FeedController::class, 'downloadReport']);
 Route::post('/order/sendconfirmation', [OrderController::class, 'sendOrderConfirmationMail']);
 
 /**
@@ -52,3 +53,4 @@ Route::post('/order/sendconfirmation', [OrderController::class, 'sendOrderConfir
 Route::prefix('roles')->group(function () {
     Route::get('/search', [RoleController::class, 'search']);
 });
+

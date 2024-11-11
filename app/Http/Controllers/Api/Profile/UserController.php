@@ -29,7 +29,7 @@ class UserController extends Controller
         $userRecord = User::find($user->id);
 
         if ($highestPriorityRole === 'doctor' || $highestPriorityRole === 'manager') {
-            $hospitalId = Hospital::find($user->hospital_id)->first() ?? null;
+            $hospitalId = Hospital::find($user->hospital_id) ?? null;
             return response()->json([
                 'user' => [
                     'data' => $user,
@@ -44,6 +44,7 @@ class UserController extends Controller
                 'user' => [
                     'data' => $user,
                     'roles' => $highestPriorityRole,
+                    'hospitalId' => null,
                     'id' => $user->id,
                 ]
             ]);
