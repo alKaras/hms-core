@@ -46,4 +46,9 @@ class TimeSlots extends Model
     {
         return $this->hasMany(CartItems::class);
     }
+
+    public function appointments()
+    {
+        return $this->hasMany(MedAppointments::class);
+    }
 }

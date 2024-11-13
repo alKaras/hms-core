@@ -5,6 +5,7 @@ namespace App\Models\Doctor;
 use App\Models\Department\Department;
 use App\Models\Hospital\Hospital;
 use App\Models\HServices;
+use App\Models\MedAppointments;
 use App\Models\TimeSlots;
 use App\Models\User\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,5 +41,10 @@ class Doctor extends Model
     public function timeSlots()
     {
         return $this->hasMany(TimeSlots::class);
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(MedAppointments::class);
     }
 }

@@ -25,7 +25,7 @@ return new class extends Migration {
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
             $table->foreign('time_slot_id')->references('id')->on('time_slots')->onDelete('cascade');
-            $table->foreign('referral_id')->references('id')->on('user_referrals')->onDelete('');
+            $table->foreign('referral_id')->references('id')->on('user_referrals');
         });
     }
 
