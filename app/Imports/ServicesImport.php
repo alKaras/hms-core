@@ -36,7 +36,12 @@ class ServicesImport implements ToModel, WithHeadingRow
         $user = User::where('email', $row['doctor_email'])
             ->first();
 
-        $doctor = Doctor::where('user_id', $user->id)->where('hospital_id', '=', $hospital->id)->first();
+        // $doctor = Doctor::where('user_id', $user->id)->where('hospital_id', '=', $hospital->id)->first();
+        $doctor = Doctor::where('user_id', $user->id)
+            ->whereHas('user', function ($query) use ($hospital) {
+                $query->where('hospital_id', $hospital->id);
+            })
+            ->first();
 
         if (!$department || !$hospital || !$doctor) {
             throw new Exception('Error occurred while finding hospital doctor or department');
