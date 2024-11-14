@@ -16,4 +16,6 @@ Route::prefix('/timeslots')->group(function () {
     Route::post('/create', [TimeSlotsController::class, 'store']);
     Route::put('/{id}/edit', [TimeSlotsController::class, 'update']);
     Route::delete('/{id}/destroy', [TimeSlotsController::class, 'destroy']);
+
+    Route::get('/{id}/download-timeslot', [TimeSlotsController::class, 'generatePdf']);
 });

@@ -20,5 +20,3 @@ Route::get('/', function () {
 });
 
 Route::get('/verification', [\App\Http\Controllers\Api\Auth\AuthController::class, 'showVerificationPage']);
-Route::get('/api/timeslot/{id}/download-timeslot', [TimeSlotsController::class, 'generatePdf']);
-// Route::get('/api/appointment/{id}/download', [MedAppointmentsController::class, 'generateSummaryPdf']);
