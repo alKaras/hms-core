@@ -17,4 +17,10 @@ Route::prefix('appointment')->group(function () {
 
     Route::post('/cancel', [MedAppointmentsController::class, 'cancel']);
     Route::delete('/delete', [MedAppointmentsController::class, 'destroy']);
+
+    Route::post('/confirm', [MedAppointmentsController::class, 'confirmAppointment']);
+
+    Route::get('/{id}/download', [MedAppointmentsController::class, 'generateSummaryPdf']);
+
+    Route::post('/summary/send', [MedAppointmentsController::class, 'sendSummaryNotification']);
 });

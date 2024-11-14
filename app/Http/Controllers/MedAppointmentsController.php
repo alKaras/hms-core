@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\TimeSlots;
+use App\Models\User\User;
+use App\Notifications\AppointmentSummaryNotification;
 use Illuminate\Http\Request;
 use App\Models\MedAppointments;
 use App\Enums\TimeslotStateEnum;
@@ -76,8 +78,6 @@ class MedAppointmentsController extends Controller
                 'next' => $medappointments->nextPageUrl(),
             ]
         ]);
-
-
     }
 
     /**
@@ -110,7 +110,9 @@ class MedAppointmentsController extends Controller
             'time_slot_id' => $timeslot,
             'referral_id' => $referral,
             'user_id' => $user,
+            'status' => AppointmentsStatusEnum::SCHEDULED,
             'created_at' => now(),
+            'updated_at' => now()
         ]);
 
         return response()->json([
@@ -159,6 +161,97 @@ class MedAppointmentsController extends Controller
                 'errors' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Confirm med appointment. Allow only after doctor consultation
+     * @param \Illuminate\Http\Request $request
+     * @return MedAppointmentResource|mixed|\Illuminate\Http\JsonResponse
+     */
+    public function confirmAppointment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'appointment' => ['required', 'exists:med_appointments,id'],
+            'doctor_id' => ['required', 'exists:doctors,id'],
+            'summary' => ['text'],
+            'notes' => ['text'],
+            'recommendations' => ['text']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Check provided data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $appointment = MedAppointments::find($request->input('appointment'));
+
+        try {
+            $appointment->update([
+                'summary' => $request->input('summary') ?? $appointment->summary,
+                'notes' => $request->input('notes') ?? $appointment->notes,
+                'recommendations' => $request->input('recommendations') ?? $appointment->recommendations,
+                'status' => AppointmentsStatusEnum::COMPLETED,
+                'updated_at' => now(),
+            ]);
+
+            return new MedAppointmentResource($appointment);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Something went wrong',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate Pdf file for summary of consultation
+     * @param mixed $id
+     * @return mixed|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     */
+    public function generateSummaryPdf($id)
+    {
+        $appointmentSum = MedAppointments::find($id);
+
+        if ($appointmentSum) {
+            $details = (new MedAppointmentResource($appointmentSum))->toArray(request());
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.appointment_summary', compact($details));
+
+            return $pdf->download("appointment-{$appointmentSum->id}.pdf");
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => "There are no appointments for provided id{$id}",
+            ], 404);
+        }
+    }
+
+
+    /**
+     * Send summary notification after confirmation
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function sendSummaryNotification(Request $request)
+    {
+        $appointmentSum = MedAppointments::find($request->input('appointmentId'));
+
+        if ($appointmentSum) {
+            $user = User::find($appointmentSum->user_id);
+
+            $user->notify(new AppointmentSummaryNotification($appointmentSum));
+
+        }
+        return response()->json([
+            'status' => 'error',
+            'message' => "There are no appointments for provided id{$request->appointmentId}"
+        ], 404);
+
+
     }
 
     public function cancel(Request $request)

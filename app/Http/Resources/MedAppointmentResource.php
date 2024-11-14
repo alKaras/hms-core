@@ -19,6 +19,7 @@ class MedAppointmentResource extends JsonResource
             'summary' => $this->summary,
             'notes' => $this->notes,
             'recommendations' => $this->recommendations,
+            'status' => $this->status,
             'doctor' => [
                 'id' => $this->doctor->id,
                 'name' => $this->doctor->user->name,
@@ -44,6 +45,13 @@ class MedAppointmentResource extends JsonResource
                 'code' => $this->referral->referral_code,
                 'expired_at' => $this->referral->expired_at,
                 'data' => json_decode($this->referral->decoded_data),
+            ],
+            'hospital' => [
+                'id' => $this->doctor->user->hospital_id,
+                'title' => $this->doctor->user->hospital->content->title,
+                'email' => $this->doctor->user->hospital->hospital_email,
+                'phone' => $this->doctor->user->hospital->hospital_phone,
+                'address' => $this->doctor->user->hospital->content->address,
             ]
         ];
     }
