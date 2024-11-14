@@ -33,18 +33,18 @@ class MedAppointments extends Model
         return $this->belongsTo(Doctor::class);
     }
 
-    public function patient()
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
     public function timeslot()
     {
-        return $this->belongsTo(TimeSlots::class);
+        return $this->belongsTo(TimeSlots::class, 'time_slot_id');
     }
 
     public function referral()
     {
-        return $this->belongsTo(UserReferral::class);
+        return $this->belongsTo(UserReferral::class, 'referral_id');
     }
 }

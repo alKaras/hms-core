@@ -103,13 +103,9 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(UserReferral::class);
     }
 
-    /**
-     * Hospital reference
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
     public function hospital()
     {
-        return $this->hasOne(Hospital::class);
+        return $this->belongsTo(Hospital::class, 'hospital_id');
     }
 
     public function reviews()

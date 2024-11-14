@@ -34,7 +34,7 @@ class TimeSlots extends Model
 
     public function service()
     {
-        return $this->belongsTo(HServices::class);
+        return $this->belongsTo(HServices::class, 'service_id');
     }
 
     public function scopeByDate($query, $date)

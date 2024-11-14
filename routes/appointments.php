@@ -13,7 +13,7 @@ Route::prefix('appointment')->group(function () {
 
     Route::post('/create', [MedAppointmentsController::class, 'store']);
 
-    Route::put('/edit', [MedAppointmentsController::class, 'update']);
+    Route::post('/edit', [MedAppointmentsController::class, 'update']);
 
     Route::post('/cancel', [MedAppointmentsController::class, 'cancel']);
     Route::delete('/delete', [MedAppointmentsController::class, 'destroy']);

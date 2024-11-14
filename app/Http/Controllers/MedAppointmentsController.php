@@ -21,7 +21,10 @@ class MedAppointmentsController extends Controller
     {
         $medappointments = MedAppointments::all();
 
-        return new MedAppointmentResource($medappointments);
+        return [
+            'status' => 'ok',
+            'data' => MedAppointmentResource::collection($medappointments)
+        ];
 
     }
 
@@ -38,7 +41,7 @@ class MedAppointmentsController extends Controller
 
         return response()->json([
             'status' => 'ok',
-            'data' => MedAppointmentResource::collection($appointment),
+            'data' => new MedAppointmentResource($appointment),
         ]);
     }
 
@@ -117,8 +120,8 @@ class MedAppointmentsController extends Controller
 
         return response()->json([
             'status' => 'ok',
-            'message' => 'Appointment created successfully',
-            'data' => MedAppointmentResource::collection($appointment),
+            'message' => 'Appointment created successfully'
+            // 'data' => MedAppointmentResource::collection($appointment),
         ]);
     }
 
@@ -129,10 +132,10 @@ class MedAppointmentsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'appointment' => ['required', 'exists:med_appointments,id'],
-            'doctor_id' => ['required', 'exists:doctors,id'],
-            'summary' => ['text'],
-            'notes' => ['text'],
-            'recommendations' => ['text']
+            // 'doctor_id' => ['required', 'exists:doctors,id'],
+            'summary' => ['string', 'max:5000'],
+            'notes' => ['string', 'max:5000'],
+            'recommendations' => ['string', 'max:5000']
         ]);
 
         if ($validator->fails()) {
@@ -172,10 +175,10 @@ class MedAppointmentsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'appointment' => ['required', 'exists:med_appointments,id'],
-            'doctor_id' => ['required', 'exists:doctors,id'],
-            'summary' => ['text'],
-            'notes' => ['text'],
-            'recommendations' => ['text']
+            // 'doctor_id' => ['required', 'exists:doctors,id'],
+            'summary' => ['string', 'max:5000'],
+            'notes' => ['string', 'max:5000'],
+            'recommendations' => ['string', 'max:5000']
         ]);
 
         if ($validator->fails()) {
@@ -240,16 +243,23 @@ class MedAppointmentsController extends Controller
     {
         $appointmentSum = MedAppointments::find($request->input('appointmentId'));
 
-        if ($appointmentSum) {
+        if ($appointmentSum && $appointmentSum->status == AppointmentsStatusEnum::COMPLETED) {
             $user = User::find($appointmentSum->user_id);
 
             $user->notify(new AppointmentSummaryNotification($appointmentSum));
 
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Letter with summary sent successfully',
+            ]);
+
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => "There are no appointments for provided id{$request->appointmentId} or status of appointment is not completed"
+            ], 404);
         }
-        return response()->json([
-            'status' => 'error',
-            'message' => "There are no appointments for provided id{$request->appointmentId}"
-        ], 404);
+
 
 
     }

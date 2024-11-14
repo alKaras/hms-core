@@ -20,39 +20,39 @@ class MedAppointmentResource extends JsonResource
             'notes' => $this->notes,
             'recommendations' => $this->recommendations,
             'status' => $this->status,
-            'doctor' => [
+            'doctor' => $this->doctor ? [
                 'id' => $this->doctor->id,
-                'name' => $this->doctor->user->name,
-                'surname' => $this->doctor->user->surname,
-                'email' => $this->doctor->user->email,
-            ],
-            'patient' => [
-                'id' => $this->patient->id,
-                'name' => $this->patient->name,
-                'surname' => $this->patient->surname,
-                'phone' => $this->patient->phone,
-                'email' => $this->patient->email,
-            ],
-            'service' => [
+                'name' => $this->doctor->user->name ?? '',
+                'surname' => $this->doctor->user->surname ?? '',
+                'email' => $this->doctor->user->email ?? '',
+            ] : null,
+            'patient' => $this->user ? [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'surname' => $this->user->surname,
+                'phone' => $this->user->phone,
+                'email' => $this->user->email,
+            ] : null,
+            'service' => $this->timeslot && $this->timeslot->service ? [
                 'id' => $this->timeslot->service->id,
                 'name' => $this->timeslot->service->name,
-                'department' => $this->timeslot->service->department->content->title,
+                'department' => $this->timeslot->service->department->content->title ?? '',
                 'start_time' => $this->timeslot->start_time,
                 'state' => $this->timeslot->state,
-            ],
-            'referral' => [
+            ] : null,
+            'referral' => $this->referral ? [
                 'id' => $this->referral->id,
                 'code' => $this->referral->referral_code,
                 'expired_at' => $this->referral->expired_at,
                 'data' => json_decode($this->referral->decoded_data),
-            ],
-            'hospital' => [
+            ] : null,
+            'hospital' => $this->doctor && $this->doctor->user && $this->doctor->user->hospital ? [
                 'id' => $this->doctor->user->hospital_id,
-                'title' => $this->doctor->user->hospital->content->title,
-                'email' => $this->doctor->user->hospital->hospital_email,
-                'phone' => $this->doctor->user->hospital->hospital_phone,
-                'address' => $this->doctor->user->hospital->content->address,
-            ]
+                'title' => $this->doctor->user->hospital->content->title ?? '',
+                'email' => $this->doctor->user->hospital->hospital_email ?? '',
+                'phone' => $this->doctor->user->hospital->hospital_phone ?? '',
+                'address' => $this->doctor->user->hospital->content->address ?? '',
+            ] : null,
         ];
     }
 }

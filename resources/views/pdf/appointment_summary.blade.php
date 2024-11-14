@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Висновок послуги {{$details['serice']['name']}}</title>
+    <title>Висновок послуги {{$details['service']['name']}}</title>
     <style>
         @font-face {
             font-family: 'DejaVuSans';
