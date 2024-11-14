@@ -92,7 +92,7 @@
             {{ $details['hospital']['title'] ?? null }}
             {{$details['hospital']['address'] ?? null}}
         </p>
-        <p><strong>Телефон лікарні: </strong> {{ $details['hospital']['title'] ?? null }}</p>
+        <p><strong>Телефон лікарні: </strong> {{ $details['hospital']['public_phone'] ?? null }}</p>
         </p>
     </div>
 

@@ -222,7 +222,7 @@ class MedAppointmentsController extends Controller
         if ($appointmentSum) {
             $details = (new MedAppointmentResource($appointmentSum))->toArray(request());
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.appointment_summary', compact($details));
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.appointment_summary', compact('details'));
 
             return $pdf->download("appointment-{$appointmentSum->id}.pdf");
         } else {
