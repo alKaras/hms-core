@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Талон {{$details['id']}}</title>
+    <title>Висновок послуги {{$details['service']['name']}}</title>
     <style>
         @font-face {
             font-family: 'DejaVuSans';
@@ -33,6 +33,13 @@
             font-size: 18px;
             margin: 5px 0;
             color: #555;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin: 5px 0;
+            color: black;
+            font-weight: bold;
         }
 
         .ticket-info {
@@ -75,51 +82,66 @@
             color: #777;
             text-align: center;
         }
+
+        .main-block {
+            margin-top: 15px;
+            margin-bottom: 15px;
+
+        }
     </style>
 </head>
 
 <body>
 
     <div class="ticket-header">
-        <h1>Талон на відвідування послуги</h1>
+        <h1>Медичний висновок</h1>
     </div>
 
     <div class="ticket-info">
         <h2>Загальна інформація</h2>
-        <p><strong>Послуга: </strong> {{ $details['service']['name'] }}</p>
-        <p><strong>Орієнтований час початку: </strong> {{ date('d/m/Y H:i', strtotime($details['start_time'])) }}</p>
-        <p><strong>Лікарня: </strong>
-            {{ $details['hospital']['title'] ?? null }}
-            {{$details['hospital']['address'] ?? null}}
+        <p>
+            <strong>Послуга: </strong>
+            {{ $details['service']['name'] }}
         </p>
-        <p><strong>Телефон лікарні: </strong> {{ $details['hospital']['public_phone'] ?? null }}</p>
+        <p>
+            <strong>Орієнтований час початку: </strong>
+            {{ date('d/m/Y H:i', strtotime($details['service']['start_time'])) }}
+        </p>
+        <p>
+            <strong>Лікар: </strong>
+            {{ $details['doctor']['name']}} {{ $details['doctor']['surname'] }}
+        </p>
+        <p style="margin-bottom: 15px">
+            <strong>Пошта лікаря: </strong>
+            {{ $details['doctor']['email'] ?? null }}
+        </p>
+        <h3>Пацієнт</h3>
+        <p>
+            <strong>Ім'я:</strong>
+            {{ $details['patient']['name']}} {{$details['patient']['surname']}}
+        </p>
+        <p>
+            <strong>Пошта:</strong>
+            {{ $details['patient']['email']}}
         </p>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Лікар</th>
-                <th>Послуга</th>
-                <th>Відділ</th>
-                <th>Ціна</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{{ $details['service']['id'] }}</td>
-                <td>{{ $details['doctor']['name'] }} {{ $details['doctor']['surname'] }}</td>
-                <td>{{ $details['service']['name'] }}</td>
-                <td>{{ $details['service']['department'] }}</td>
-                <td>{{ $details['price']}}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="main-block">
+        <h3>Висновок:</h3>
+        <p>
+            {{$details['summary']}}
+        </p>
 
-    <p class="note">
-        Будь ласка, приходьте за 10 хвилин до призначеного часу і візьміть з собою всі необхідні документи.
-    </p>
+        <h3>Рекомендації:</h3>
+        <p>
+            {{$details['recommendations']}}
+        </p>
+
+        <h3>Замітки:</h3>
+        <p>
+            {{$details['notes']}}
+        </p>
+    </div>
 
 </body>
 

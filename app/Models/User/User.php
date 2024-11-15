@@ -4,6 +4,7 @@ namespace App\Models\User;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\HospitalReview;
+use App\Models\MedAppointments;
 use App\Models\Role;
 use App\Models\Doctor\Doctor;
 use App\Models\Hospital\Hospital;
@@ -102,17 +103,18 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(UserReferral::class);
     }
 
-    /**
-     * Hospital reference
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
     public function hospital()
     {
-        return $this->hasOne(Hospital::class);
+        return $this->belongsTo(Hospital::class, 'hospital_id');
     }
 
     public function reviews()
     {
         return $this->hasMany(HospitalReview::class);
+    }
+
+    public function appointments()
+    {
+        return $this->has(MedAppointments::class);
     }
 }

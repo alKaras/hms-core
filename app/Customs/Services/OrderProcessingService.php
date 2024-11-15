@@ -2,6 +2,9 @@
 
 namespace App\Customs\Services;
 
+use App\Enums\AppointmentsStatusEnum;
+use App\Models\MedAppointments;
+use App\Models\Order\OrderServices;
 use Stripe\Stripe;
 use App\Models\Cart\Cart;
 use App\Models\TimeSlots;
@@ -109,6 +112,9 @@ class OrderProcessingService
             ]);
 
             $this->changeOrderServicesTimeslotsState($order, TimeslotStateEnum::SOLD);
+
+            $this->makeAppointmentOnConfirmation($order);
+
             $this->sendOrderConfirmationNotification($order);
 
             return response()->json([
@@ -151,6 +157,8 @@ class OrderProcessingService
                         'confirmed_at' => now(),
                         'updated_at' => now(),
                     ]);
+
+                    $this->makeAppointmentOnConfirmation($order);
 
                     $this->changeOrderServicesTimeslotsState($order, TimeslotStateEnum::SOLD);
 
@@ -260,6 +268,27 @@ class OrderProcessingService
                 $timeSlot->state = $status;
                 $timeSlot->save();
             }
+        }
+    }
+
+    private function makeAppointmentOnConfirmation(Order $order)
+    {
+        $user = User::find($order->user_id);
+        $timeslots = $order->orderServices->map(function ($orderService) {
+            return $orderService->timeSlot;
+        });
+
+        foreach ($timeslots as $slot) {
+            $appointment = MedAppointments::create([
+                'user_id' => $user->id,
+                'doctor_id' => $slot->doctor_id,
+                'time_slot_id' => $slot->id,
+                'status' => AppointmentsStatusEnum::SCHEDULED,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            $appointment->save();
         }
     }
 
