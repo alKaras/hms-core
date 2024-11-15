@@ -45,6 +45,22 @@ class MedAppointmentsController extends Controller
         ]);
     }
 
+    public function getUserAppointments(Request $request)
+    {
+        $appointment = MedAppointments::where('user_id', '=', $request->input('user_id'))->get();
+
+        if (!$appointment) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'There is no appointment for provided userId'
+            ], 404);
+        }
+        return response()->json([
+            'status' => 'ok',
+            'data' => MedAppointmentResource::collection($appointment),
+        ]);
+    }
+
     public function getByDoctor(Request $request)
     {
         $validator = Validator::make($request->all(), [

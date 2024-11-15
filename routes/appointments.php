@@ -9,7 +9,7 @@ use App\Http\Controllers\MedAppointmentsController;
 Route::prefix('appointment')->group(function () {
     Route::get('/fetch', [MedAppointmentsController::class, 'index']);
     Route::post('/single/get', [MedAppointmentsController::class, 'show']);
-    Route::post('/get/bydoctor', [MedAppointmentsController::class, 'getByDoctor']);
+    Route::post('/bydoctor/get', [MedAppointmentsController::class, 'getByDoctor']);
 
     Route::post('/create', [MedAppointmentsController::class, 'store']);
 
@@ -23,4 +23,6 @@ Route::prefix('appointment')->group(function () {
     Route::get('/{id}/download', [MedAppointmentsController::class, 'generateSummaryPdf']);
 
     Route::post('/summary/send', [MedAppointmentsController::class, 'sendSummaryNotification']);
+
+    Route::post('/byuser/get', [MedAppointmentsController::class, 'getUserAppointments']);
 });
