@@ -36,6 +36,7 @@ class MedCardController extends Controller
     public function showByUser(Request $request)
     {
         $medcard = MedCard::where('user_id', $request->user_id)->first();
+        $completedOnly = true;
 
         if (!$medcard) {
             return response()->json([
@@ -46,7 +47,7 @@ class MedCardController extends Controller
 
         return response()->json([
             'status' => 'ok',
-            'data' => new MedCardResource($medcard)
+            'data' => new MedCardResource($medcard, $completedOnly)
         ]);
     }
 
@@ -99,7 +100,7 @@ class MedCardController extends Controller
             'blood_type' => $request->blood_type ?? null,
             'allergies' => $request->allergies ?? null,
             'chronic_conditions' => $request->chronic_conditions ?? null,
-            'current_medications' => $request->current_meddications ?? null,
+            'current_medications' => $request->current_medications ?? null,
             'emergency_contact_name' => $request->emergency_contact_name,
             'emergency_contact_phone' => $request->emergency_contact_phone,
             'insurance_details' => $request->insurance_details ?? null,
@@ -152,7 +153,7 @@ class MedCardController extends Controller
                 'address' => $request->address ?? $medcard->address,
                 'allergies' => $request->allergies ?? $medcard->allergies,
                 'chronic_conditions' => $request->chronic_conditions ?? $medcard->chronic_conditions,
-                'current_medications' => $request->current_meddications ?? $medcard->current_meddications,
+                'current_medications' => $request->current_medications ?? $medcard->current_medications,
                 'emergency_contact_name' => $request->emergency_contact_name ?? $medcard->emergency_contact_name,
                 'emergency_contact_phone' => $request->emergency_contact_phone ?? $medcard->emergency_contact_phone,
                 'insurance_details' => $request->insurance_details ?? $medcard->insurance_details,

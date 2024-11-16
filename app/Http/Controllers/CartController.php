@@ -88,7 +88,7 @@ class CartController extends Controller
             return response()->json([
                 'status' => 'error',
                 'error' => 'Access denied',
-                'message' => 'Check following conditions: Hospital must be provided. User must be verified. User must have medcard'
+                'message' => 'Hospital is not provided or user isn\'t verified or user doesn\'t have medcard',
             ], 403);
         }
 
