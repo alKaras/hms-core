@@ -39,6 +39,7 @@ require __DIR__ . '/doctor.php';
 require __DIR__ . '/department.php';
 require __DIR__ . '/timeslot.php';
 require __DIR__ . '/appointments.php';
+require __DIR__ . '/medcard.php';
 
 
 Route::post('/webhook', [OrderController::class, 'stripeHookHandler']);

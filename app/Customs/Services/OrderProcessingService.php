@@ -4,6 +4,7 @@ namespace App\Customs\Services;
 
 use App\Enums\AppointmentsStatusEnum;
 use App\Models\MedAppointments;
+use App\Models\MedCard;
 use App\Models\Order\OrderServices;
 use Stripe\Stripe;
 use App\Models\Cart\Cart;
@@ -274,6 +275,8 @@ class OrderProcessingService
     private function makeAppointmentOnConfirmation(Order $order)
     {
         $user = User::find($order->user_id);
+        $medcard = MedCard::where('user_id', '=', $user->id)->first() ?? null;
+
         $timeslots = $order->orderServices->map(function ($orderService) {
             return $orderService->timeSlot;
         });
@@ -284,6 +287,7 @@ class OrderProcessingService
                 'doctor_id' => $slot->doctor_id,
                 'time_slot_id' => $slot->id,
                 'status' => AppointmentsStatusEnum::SCHEDULED,
+                'medcard_id' => $medcard->id,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
