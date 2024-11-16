@@ -22,6 +22,7 @@ class MedAppointments extends Model
         'notes',
         'recommendations',
         'status',
+        'medcard_id',
     ];
 
     protected $casts = [
@@ -46,5 +47,10 @@ class MedAppointments extends Model
     public function referral()
     {
         return $this->belongsTo(UserReferral::class, 'referral_id');
+    }
+
+    public function medcard()
+    {
+        return $this->belongsTo(MedCard::class);
     }
 }

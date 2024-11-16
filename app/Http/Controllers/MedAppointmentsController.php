@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MedCard;
 use App\Models\TimeSlots;
 use App\Models\User\User;
 use App\Notifications\AppointmentSummaryNotification;
@@ -123,6 +124,7 @@ class MedAppointmentsController extends Controller
         $timeslot = $request->input('time_slot_id');
         $referral = $request->input('referral_id', null);
         $user = $request->input('user_id');
+        $medcard = MedCard::where('user_id', $user)->first();
 
         $appointment = MedAppointments::create([
             'doctor_id' => $doctor,
@@ -130,6 +132,7 @@ class MedAppointmentsController extends Controller
             'referral_id' => $referral,
             'user_id' => $user,
             'status' => AppointmentsStatusEnum::SCHEDULED,
+            'medcard_id' => $medcard->id ?? null,
             'created_at' => now(),
             'updated_at' => now()
         ]);
@@ -163,12 +166,14 @@ class MedAppointmentsController extends Controller
         }
 
         $appointment = MedAppointments::find($request->input('appointment'));
+        $medcard = MedCard::where('user_id', $appointment->user_id)->first();
 
         try {
             $appointment->update([
                 'summary' => $request->input('summary') ?? $appointment->summary,
                 'notes' => $request->input('notes') ?? $appointment->notes,
                 'recommendations' => $request->input('recommendations') ?? $appointment->recommendations,
+                'medcard_id' => $appointment->medcard_id !== null ? $appointment->medcard_id : $medcard->id,
                 'updated_at' => now(),
             ]);
 
@@ -206,6 +211,7 @@ class MedAppointmentsController extends Controller
         }
 
         $appointment = MedAppointments::find($request->input('appointment'));
+        $medcard = MedCard::where('user_id', $appointment->user_id)->first();
 
         try {
             $appointment->update([
@@ -213,6 +219,7 @@ class MedAppointmentsController extends Controller
                 'notes' => $request->input('notes') ?? $appointment->notes,
                 'recommendations' => $request->input('recommendations') ?? $appointment->recommendations,
                 'status' => AppointmentsStatusEnum::COMPLETED,
+                'medcard_id' => $appointment->medcard_id !== null ? $appointment->medcard_id : $medcard->id,
                 'updated_at' => now(),
             ]);
 
