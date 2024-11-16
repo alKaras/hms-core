@@ -39,6 +39,7 @@ class TimeSlotsResource extends JsonResource
             'end_time' => $this->end_time,
             'price' => $this->price,
             'state' => $this->state,
+            'isOnline' => $this->online,
         ];
     }
 }

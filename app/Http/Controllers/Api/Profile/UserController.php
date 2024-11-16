@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Api\Profile;
 
+use App\Models\Role;
+use App\Models\MedCard;
+use App\Models\User\User;
+use Illuminate\Http\Request;
+use App\Models\User\UserRole;
+use App\Models\Hospital\Hospital;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
-use App\Models\Hospital\Hospital;
-use App\Models\Role;
-use App\Models\User\User;
-use App\Models\User\UserRole;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
@@ -28,6 +29,8 @@ class UserController extends Controller
         $highestPriorityRole = $user->roles()->orderBy('priority', 'desc')->pluck('title')->first();
         $userRecord = User::find($user->id);
 
+        $medcard = MedCard::where('user_id', $userRecord->id)->first();
+
         if ($highestPriorityRole === 'doctor' || $highestPriorityRole === 'manager') {
             $hospitalId = Hospital::find($user->hospital_id) ?? null;
             return response()->json([
@@ -37,6 +40,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'hospitalId' => $hospitalId->id ?? null,
                     'doctor' => $highestPriorityRole === 'doctor' ? $userRecord->doctor?->id : null,
+                    'medcard' => null,
                 ]
             ]);
         } else {
@@ -46,6 +50,7 @@ class UserController extends Controller
                     'roles' => $highestPriorityRole,
                     'hospitalId' => null,
                     'id' => $user->id,
+                    'medcard' => $medcard->id ?? null,
                 ]
             ]);
         }

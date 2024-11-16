@@ -23,6 +23,7 @@ class MedAppointments extends Model
         'recommendations',
         'status',
         'medcard_id',
+        'meet_link',
     ];
 
     protected $casts = [

@@ -20,6 +20,7 @@ class MedAppointmentResource extends JsonResource
             'notes' => $this->notes,
             'recommendations' => $this->recommendations,
             'status' => $this->status,
+            'meetLink' => $this->meet_link ?? null,
             'doctor' => $this->doctor ? [
                 'id' => $this->doctor->id,
                 'name' => $this->doctor->user->name ?? '',

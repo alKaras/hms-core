@@ -22,6 +22,10 @@ class OrderProcessingService
 {
     private const ORDER_PAYMENT_COMMISSION = 0.1;
 
+    public function __construct(public MeetHandlerService $meetHandlerService)
+    {
+    }
+
     public function checkoutProcessing()
     {
         $user = auth()->user();
@@ -288,6 +292,7 @@ class OrderProcessingService
                 'time_slot_id' => $slot->id,
                 'status' => AppointmentsStatusEnum::SCHEDULED,
                 'medcard_id' => $medcard->id,
+                'meet_link' => $slot->online ? $this->meetHandlerService->createLink() : null,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
