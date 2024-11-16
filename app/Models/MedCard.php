@@ -38,6 +38,6 @@ class MedCard extends Model
 
     public function appointments()
     {
-        return $this->hasMany(MedAppointments::class);
+        return $this->hasMany(MedAppointments::class, 'medcard_id', 'id');
     }
 }

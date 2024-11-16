@@ -13,7 +13,7 @@ class MedCardController extends Controller
     {
         $medcards = MedCard::all();
 
-        return new MedCardResource($medcards);
+        return MedCardResource::collection($medcards);
     }
 
     public function showById($id)
@@ -79,6 +79,15 @@ class MedCardController extends Controller
             ], 422);
         }
 
+        $existedMedCard = MedCard::where('user_id', $request->user_id)->first();
+
+        if ($existedMedCard) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Med card for provided user is already existed"
+            ], 500);
+        }
+
         $medcard = MedCard::create([
             'user_id' => $request->user_id,
             'firstname' => $request->firstname,
@@ -90,7 +99,7 @@ class MedCardController extends Controller
             'blood_type' => $request->blood_type ?? null,
             'allergies' => $request->allergies ?? null,
             'chronic_conditions' => $request->chronic_conditions ?? null,
-            'current_meddications' => $request->current_meddications ?? null,
+            'current_medications' => $request->current_meddications ?? null,
             'emergency_contact_name' => $request->emergency_contact_name,
             'emergency_contact_phone' => $request->emergency_contact_phone,
             'insurance_details' => $request->insurance_details ?? null,
@@ -101,7 +110,7 @@ class MedCardController extends Controller
         return response()->json([
             'status' => 'ok',
             'message' => "Med card for user#{$request->user_id} created successfully",
-            'data' => MedCardResource::collection($medcard)
+            'data' => new MedCardResource($medcard)
         ]);
     }
 
@@ -143,7 +152,7 @@ class MedCardController extends Controller
                 'address' => $request->address ?? $medcard->address,
                 'allergies' => $request->allergies ?? $medcard->allergies,
                 'chronic_conditions' => $request->chronic_conditions ?? $medcard->chronic_conditions,
-                'current_meddications' => $request->current_meddications ?? $medcard->current_meddications,
+                'current_medications' => $request->current_meddications ?? $medcard->current_meddications,
                 'emergency_contact_name' => $request->emergency_contact_name ?? $medcard->emergency_contact_name,
                 'emergency_contact_phone' => $request->emergency_contact_phone ?? $medcard->emergency_contact_phone,
                 'insurance_details' => $request->insurance_details ?? $medcard->insurance_details,

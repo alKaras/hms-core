@@ -51,6 +51,6 @@ class MedAppointments extends Model
 
     public function medcard()
     {
-        return $this->belongsTo(MedCard::class);
+        return $this->belongsTo(MedCard::class, 'medcard_id');
     }
 }
