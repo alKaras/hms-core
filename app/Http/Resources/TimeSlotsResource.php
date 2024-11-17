@@ -40,6 +40,7 @@ class TimeSlotsResource extends JsonResource
             'price' => $this->price,
             'state' => $this->state,
             'isOnline' => $this->online,
+            'meet_link' => $this->online && $this->appointments ? $this->appointments->meet_link : null,
         ];
     }
 }

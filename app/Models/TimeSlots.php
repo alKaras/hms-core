@@ -50,6 +50,6 @@ class TimeSlots extends Model
 
     public function appointments()
     {
-        return $this->hasMany(MedAppointments::class);
+        return $this->hasOne(MedAppointments::class, 'time_slot_id');
     }
 }

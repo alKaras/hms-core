@@ -41,7 +41,7 @@ class MedCardResource extends JsonResource
             'current_medications' => $this->current_medications,
             'emergency_contact_name' => $this->emergency_contact_name,
             'emergency_contact_phone' => $this->emergency_contact_phone,
-            'insurrance_details' => $this->insurrance_details,
+            'insurance_details' => $this->insurance_details,
             'additional_notes' => $this->additional_notes,
             'appointments' => $filteredAppointments->map(function ($appointment) {
                 return [

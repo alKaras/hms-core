@@ -64,7 +64,7 @@ class MedCardController extends Controller
             'blood_type' => ['nullable', 'string', 'max:3'],
             'allergies' => ['nullable', 'string', 'max:5000'],
             'chronic_conditions' => ['nullable', 'string', 'max:5000'],
-            'current_meddications' => ['nullable', 'string', 'max:5000'],
+            'current_medications' => ['nullable', 'string', 'max:5000'],
             'emergency_contact_name' => ['string', 'required'],
             'emergency_contact_phone' => ['required', 'string'],
             'insurance_details' => ['nullable', 'string', 'max:5000'],
@@ -126,13 +126,15 @@ class MedCardController extends Controller
             'address' => ['string'],
             'allergies' => ['nullable', 'string', 'max:5000'],
             'chronic_conditions' => ['nullable', 'string', 'max:5000'],
-            'current_meddications' => ['nullable', 'string', 'max:5000'],
+            'current_medications' => ['nullable', 'string', 'max:5000'],
             'emergency_contact_name' => ['string'],
             'emergency_contact_phone' => ['string'],
             'insurance_details' => ['nullable', 'string', 'max:5000'],
             'additional_notes' => ['nullable', 'string', 'max:5000'],
             'status' => ['nullable', 'in:active,inactive,archived'],
         ]);
+
+
 
         if ($validator->fails()) {
             return response()->json([
@@ -153,13 +155,15 @@ class MedCardController extends Controller
                 'address' => $request->address ?? $medcard->address,
                 'allergies' => $request->allergies ?? $medcard->allergies,
                 'chronic_conditions' => $request->chronic_conditions ?? $medcard->chronic_conditions,
-                'current_medications' => $request->current_medications ?? $medcard->current_medications,
                 'emergency_contact_name' => $request->emergency_contact_name ?? $medcard->emergency_contact_name,
                 'emergency_contact_phone' => $request->emergency_contact_phone ?? $medcard->emergency_contact_phone,
                 'insurance_details' => $request->insurance_details ?? $medcard->insurance_details,
+                'current_medications' => $request->current_medications ?? $medcard->current_medications,
                 'additional_notes' => $request->additional_notes ?? $medcard->additional_notes,
                 'status' => $request->status ?? $medcard->status,
             ]);
+
+            $medcard->save();
 
             return response()->json([
                 'status' => 'ok',

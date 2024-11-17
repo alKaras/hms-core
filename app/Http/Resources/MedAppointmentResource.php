@@ -40,6 +40,7 @@ class MedAppointmentResource extends JsonResource
                 'department' => $this->timeslot->service->department->content->title ?? '',
                 'start_time' => $this->timeslot->start_time,
                 'state' => $this->timeslot->state,
+                'isOnline' => $this->timeslot->online,
             ] : null,
             'referral' => $this->referral ? [
                 'id' => $this->referral->id,
