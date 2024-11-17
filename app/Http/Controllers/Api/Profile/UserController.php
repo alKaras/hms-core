@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Profile;
 use App\Models\Role;
 use App\Models\MedCard;
 use App\Models\User\User;
+use App\Notifications\RegisteredUserCredentials;
 use Illuminate\Http\Request;
 use App\Models\User\UserRole;
 use App\Models\Hospital\Hospital;
@@ -129,6 +130,8 @@ class UserController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            $user->notify(new RegisteredUserCredentials($user->email, $request->password));
 
             return new UserResource($user);
         }

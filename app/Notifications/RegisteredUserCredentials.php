@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class DoctorCredentialsNotification extends Notification
+class RegisteredUserCredentials extends Notification
 {
     use Queueable;
 
@@ -34,13 +34,13 @@ class DoctorCredentialsNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Ваші дані для входу в лікарський кабінет')
+            ->subject('Вас зареєстровано в системі')
             ->greeting('Привіт, ' . $notifiable->name)
-            ->line("Ваш лікарський аккаунт створено успішно.")
-            ->line("Ваші дані для входу:")
-            ->line("Пошта: " . $this->email)
-            ->line("Пароль: " . $this->password)
-            ->line("Будь ласка зберігайте інформацію в безпеці.")
+            ->line('Вас зареєстровано в централізованій системі HMS')
+            ->line('Ваші дані для входу:')
+            ->line('Пошта: ' . $this->email)
+            ->line('Пароль:' . $this->password)
+            ->line('Будь ласка не повідомляйте цю інформацію нікому. Якщо вважаєте, що реєстрація помилкова - зверніться на пошту hms-admin@gmail.com')
             ->salutation('З повагою, команда HMS');
     }
 
