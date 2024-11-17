@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Customs\Services\MeetHandlerService;
 use App\Models\MedCard;
 use App\Models\TimeSlots;
 use App\Models\User\User;
@@ -15,6 +16,10 @@ use App\Http\Resources\MedAppointmentResource;
 
 class MedAppointmentsController extends Controller
 {
+
+    public function __construct(public MeetHandlerService $meetHandlerService)
+    {
+    }
     /**
      * Display a listing of the resource.
      */
@@ -121,18 +126,19 @@ class MedAppointmentsController extends Controller
         }
 
         $doctor = $request->input('doctor_id');
-        $timeslot = $request->input('time_slot_id');
+        $timeslot = TimeSlots::find($request->input('time_slot_id'));
         $referral = $request->input('referral_id', null);
         $user = $request->input('user_id');
         $medcard = MedCard::where('user_id', $user)->first();
 
         $appointment = MedAppointments::create([
             'doctor_id' => $doctor,
-            'time_slot_id' => $timeslot,
+            'time_slot_id' => $timeslot->id,
             'referral_id' => $referral,
             'user_id' => $user,
             'status' => AppointmentsStatusEnum::SCHEDULED,
             'medcard_id' => $medcard->id ?? null,
+            'meet_link' => $timeslot->online ? $this->meetHandlerService->createLink() : null,
             'created_at' => now(),
             'updated_at' => now()
         ]);

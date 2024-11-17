@@ -2,11 +2,17 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\AppointmentsStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class MedCardResource extends JsonResource
 {
+
+    public function __construct($resource, protected bool $completedOnly = false)
+    {
+        parent::__construct($resource);
+    }
     /**
      * Transform the resource into an array.
      *
@@ -14,6 +20,13 @@ class MedCardResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+
+        $filteredAppointments = $this->appointments !== null ? $this->appointments->filter(function ($appointment) {
+            if ($this->completedOnly) {
+                return $appointment->status === AppointmentsStatusEnum::COMPLETED;
+            }
+            return true;
+        }) : collect();
         return [
             'id' => $this->id,
             'firstname' => $this->firstname ?? $this->user->name,
@@ -28,10 +41,9 @@ class MedCardResource extends JsonResource
             'current_medications' => $this->current_medications,
             'emergency_contact_name' => $this->emergency_contact_name,
             'emergency_contact_phone' => $this->emergency_contact_phone,
-            'insurrance_details' => $this->insurrance_details,
+            'insurance_details' => $this->insurance_details,
             'additional_notes' => $this->additional_notes,
-            'status' => $this->status,
-            'appointments' => $this->appointments !== null ? $this->appointments->map(function ($appointment) {
+            'appointments' => $filteredAppointments->map(function ($appointment) {
                 return [
                     'id' => $appointment->id,
                     'doctor' => $appointment->doctor ? [
@@ -50,6 +62,7 @@ class MedCardResource extends JsonResource
                     'summary' => $appointment->summary,
                     'notes' => $appointment->notes,
                     'recommendations' => $appointment->recommendations,
+                    'status' => $appointment->status,
                     'hospital' => $appointment->doctor && $appointment->doctor->user && $appointment->doctor->user->hospital ? [
                         'id' => $appointment->doctor->user->hospital_id,
                         'title' => $appointment->doctor->user->hospital->content->title ?? '',
@@ -58,7 +71,7 @@ class MedCardResource extends JsonResource
                         'address' => $appointment->doctor->user->hospital->content->address ?? '',
                     ] : null,
                 ];
-            }) : [],
+            }),
         ];
     }
 }

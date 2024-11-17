@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MedCard;
 use Carbon\Carbon;
 use App\Models\Cart\Cart;
 use App\Models\TimeSlots;
@@ -21,8 +22,9 @@ class CartController extends Controller
         $userRecord = User::find($user->id);
 
         $hospital = Hospital::find($request->input('hospital_id'));
+        $medcard = MedCard::where('user_id', $userRecord->id)->first();
 
-        if ($userRecord && $userRecord->email_verified_at !== null && $hospital) {
+        if ($userRecord && $userRecord->email_verified_at !== null && $hospital && $medcard) {
             $cart = Cart::where("user_id", $user->id)->first();
 
             if (!$cart) {
@@ -86,7 +88,7 @@ class CartController extends Controller
             return response()->json([
                 'status' => 'error',
                 'error' => 'Access denied',
-                'message' => 'Provided user is not verified or hospital is not provided'
+                'message' => 'Hospital is not provided or user isn\'t verified or user doesn\'t have medcard',
             ], 403);
         }
 

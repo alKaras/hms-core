@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Validator;
 use App\Models\Role;
 use App\Models\HServices;
@@ -138,6 +139,7 @@ class DoctorController extends Controller
                 'phone' => $request->phone,
                 'password' => bcrypt($password),
                 'hospital_id' => $request->hospital_id,
+                'email_verified_at' => Carbon::now(),
             ]);
 
             $userRole = Role::where('title', 'user')->value('id');

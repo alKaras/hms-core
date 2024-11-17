@@ -18,7 +18,8 @@ class TimeSlots extends Model
         'start_time',
         'end_time',
         'price',
-        'state'
+        'state',
+        'online',
     ];
 
     protected $table = 'time_slots';
@@ -49,6 +50,6 @@ class TimeSlots extends Model
 
     public function appointments()
     {
-        return $this->hasMany(MedAppointments::class);
+        return $this->hasOne(MedAppointments::class, 'time_slot_id');
     }
 }

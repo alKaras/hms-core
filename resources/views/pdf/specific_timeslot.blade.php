@@ -86,14 +86,30 @@
 
     <div class="ticket-info">
         <h2>Загальна інформація</h2>
-        <p><strong>Послуга: </strong> {{ $details['service']['name'] }}</p>
-        <p><strong>Орієнтований час початку: </strong> {{ date('d/m/Y H:i', strtotime($details['start_time'])) }}</p>
-        <p><strong>Лікарня: </strong>
+        <p>
+            <strong>Послуга: </strong>
+            {{ $details['service']['name'] }}
+        </p>
+        <p>
+            <strong>Орієнтований час початку: </strong>
+            {{ date('d/m/Y H:i', strtotime($details['start_time'])) }}
+        </p>
+        <p>
+            <strong>Лікарня: </strong>
             {{ $details['hospital']['title'] ?? null }}
             {{$details['hospital']['address'] ?? null}}
         </p>
-        <p><strong>Телефон лікарні: </strong> {{ $details['hospital']['public_phone'] ?? null }}</p>
+        <p>
+            <strong>Телефон лікарні: </strong>
+            {{ $details['hospital']['public_phone'] ?? null }}
         </p>
+
+        @if(isset($details['isOnline']) && $details['isOnline'] == 1)
+            <p>
+                <strong>Зверніть увагу! Цей прийом проходить онлайн. У назначений час під'єднайтесь за посиланням: </strong>
+                {{$details['meet_link'] ?? null}}
+            </p>
+        @endif
     </div>
 
     <table>

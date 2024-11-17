@@ -23,7 +23,7 @@ class MedCard extends Model
         'blood_type',
         'allergies',
         'chronic_conditions',
-        'current_meddications',
+        'current_medications',
         'emergency_contact_name',
         'emergency_contact_phone',
         'insurance_details',

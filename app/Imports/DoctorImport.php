@@ -2,14 +2,15 @@
 
 namespace App\Imports;
 
-use App\Models\Department\Department;
-use App\Models\Doctor\Doctor;
+use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User\User;
-use App\Notifications\DoctorCredentialsNotification;
 use Illuminate\Support\Str;
+use App\Models\Doctor\Doctor;
+use App\Models\Department\Department;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use App\Notifications\DoctorCredentialsNotification;
 
 class DoctorImport implements ToModel, WithHeadingRow
 {
@@ -28,6 +29,7 @@ class DoctorImport implements ToModel, WithHeadingRow
                 'surname' => $row['surname'],
                 'phone' => $row['phone'],
                 'password' => bcrypt($password),
+                'email_verified_at' => Carbon::now(),
             ]);
 
             $userRole = Role::where('title', 'user')->value('id');

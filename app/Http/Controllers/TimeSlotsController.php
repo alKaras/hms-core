@@ -250,6 +250,7 @@ class TimeSlotsController extends Controller
             'service_id' => ['required', 'exists:services,id'],
             'start_time' => ['required', 'date_format:Y-m-d H:i'],
             'end_time' => ['required', 'date_format:Y-m-d H:i'],
+            'isOnline' => ['required', 'numeric'],
             'price' => ['required', 'numeric'],
         ]);
 
@@ -261,12 +262,22 @@ class TimeSlotsController extends Controller
             ], 500);
         }
 
+        $service = HServices::find($request->service_id);
+
+        if (!str_contains($service->name, 'Консультація') && $request->isOnline === 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Prohibited. Only consultations can be online'
+            ], 500);
+        }
+
         $timeslot = TimeSlots::create([
             'doctor_id' => $request->doctor_id,
             'service_id' => $request->service_id,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
-            'price' => $request->price
+            'price' => $request->price,
+            'online' => $request->isOnline,
         ]);
 
         return response()->json([
@@ -289,6 +300,7 @@ class TimeSlotsController extends Controller
             'start_time' => ['required', 'date_format:Y-m-d H:i', 'before:end_time'],
             'end_time' => ['required', 'date_format:Y-m-d H:i', 'after:start_time'],
             'price' => ['required', 'numeric'],
+            'isOnline' => ['required', 'numeric'],
         ]);
 
         if ($validator->fails()) {
@@ -305,6 +317,15 @@ class TimeSlotsController extends Controller
         $startTime = Carbon::parse($request->input('start_time'));
         $endTime = Carbon::parse($request->input('end_time'));
 
+        $service = HServices::find($serviceId);
+
+        if (!str_contains($service->name, 'Консультація') && $request->isOnline === 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Prohibited. Only consultations can be online'
+            ], 500);
+        }
+
         $timeslots = [];
 
         for ($current = $startTime; $current->lt($endTime); $current->addHour()) {
@@ -314,6 +335,7 @@ class TimeSlotsController extends Controller
                 'start_time' => $current->toDateTimeString(),
                 'end_time' => $current->copy()->addHour()->toDateTimeString(),
                 'price' => $price,
+                'online' => $request->isOnline,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -348,6 +370,7 @@ class TimeSlotsController extends Controller
             'start_time' => ['date_format:Y-m-d H:i'],
             'end_time' => ['date_format:Y-m-d H:i'],
             'price' => ['numeric'],
+            'isOnline' => ['numeric'],
         ]);
 
         if ($validator->fails()) {
@@ -358,11 +381,21 @@ class TimeSlotsController extends Controller
             ]);
         }
 
+        $service = HServices::find($request->service_id);
+
+        if (!str_contains($service->name, 'Консультація') && $request->isOnline === 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Prohibited. Only consultations can be online'
+            ], 500);
+        }
+
         $timeSlot->update([
             'doctor_id' => $request->doctor_id ?? $timeSlot->doctor_id,
             'start_time' => $request->start_time ?? $timeSlot->start_time,
             'end_time' => $request->end_time ?? $timeSlot->end_time,
             'price' => $request->price ?? $timeSlot->price,
+            'online' => $request->isOnline ?? $timeSlot->online,
         ]);
 
         return new TimeSlotsResource($timeSlot);
