@@ -120,6 +120,7 @@ class TimeSlotsController extends Controller
         $freeSlotsCounter = DB::table('time_slots as ts')
             ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
             ->where('ts.start_time', '>', Carbon::now())
+            ->where('ts.state', '=', TimeslotStateEnum::FREE)
             ->when($serviceId, function ($query) use ($serviceId) {
                 return $query->where('ts.service_id', $serviceId);
             })
