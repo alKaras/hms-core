@@ -36,7 +36,7 @@ class EmailVerificationService
             ]);
         } else {
             return response()->json([
-                'status' => 'failed',
+                'status' => 'error',
                 'message' => "User not found"
             ], 404);
         }
@@ -65,14 +65,14 @@ class EmailVerificationService
             } else {
                 $token->delete();
                 response()->json([
-                    'status' => 'failed',
+                    'status' => 'error',
                     'message' => 'Token expired',
                 ], 400)->send();
                 exit;
             }
         }
         response()->json([
-            'status' => 'failed',
+            'status' => 'error',
             'message' => 'Invalid token'
         ], 400)->send();
         exit;
@@ -86,7 +86,7 @@ class EmailVerificationService
         $user = User::where('email', $email)->first();
         if (!$user) {
             return response()->json([
-                'status' => 'failed',
+                'status' => 'error',
                 'message' => "User not found"
             ], 404);
         }
@@ -106,7 +106,7 @@ class EmailVerificationService
             ])->send();
         } else {
             response()->json([
-                'status' => 'failed',
+                'status' => 'error',
                 'message' => 'Email verification failed, please try again later'
             ], 500)->send();
         }

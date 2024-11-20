@@ -50,7 +50,7 @@ class AuthController extends Controller
             return $this->responseWithToken($token, $user, $roles);
         }
         return response()->json([
-            'status' => 'failed',
+            'status' => 'error',
             'message' => 'An error occurred while trying to login'
         ], 401);
     }
@@ -113,7 +113,7 @@ class AuthController extends Controller
             return $this->responseWithToken($token, $user);
         }
         return response()->json([
-            'status' => 'failed',
+            'status' => 'error',
             'message' => 'An error occurred while trying to create user'
         ], 500);
     }

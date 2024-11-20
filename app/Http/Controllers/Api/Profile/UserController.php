@@ -136,7 +136,7 @@ class UserController extends Controller
             return new UserResource($user);
         }
         return response()->json([
-            'status' => 'failed',
+            'status' => 'error',
             'message' => 'An error occurred while trying to create user'
         ], 500);
     }

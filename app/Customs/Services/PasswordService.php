@@ -9,7 +9,7 @@ class PasswordService
     {
         if (!password_verify($current_password, auth()->user()->password)) {
             response()->json([
-                'status' => 'failed',
+                'status' => 'error',
                 'message' => "Password didn't match the current password",
             ])->send();
             exit;
@@ -30,7 +30,7 @@ class PasswordService
             ]);
         } else {
             return response()->json([
-                'status' => 'failed',
+                'status' => 'error',
                 'message' => 'An error occurred while updating password'
             ]);
         }
