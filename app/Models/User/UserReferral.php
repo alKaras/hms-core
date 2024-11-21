@@ -14,7 +14,7 @@ class UserReferral extends Model
     protected $fillable = [
         'referral_code',
         'encoded_data',
-        'decoded_data',
+        // 'decoded_data',
         'user_id',
         'expired_at',
     ];

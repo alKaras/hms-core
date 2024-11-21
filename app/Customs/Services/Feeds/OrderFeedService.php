@@ -127,7 +127,17 @@ class OrderFeedService
         $query = $onlySold ? Order::where('user_id', '=', $user_id)->where('status', '=', '2')
             :
             Order::where('user_id', '=', $user_id);
-        $orders = $limit ? $query->limit($limit)->get() : $query->paginate($perPage);
+        $orders = $query->with(['orderServices.timeSlot'])
+            ->whereHas('orderServices.timeSlot', function ($q) {
+                $q->orderBy('start_time', 'desc');
+            });
+
+        if ($limit) {
+            $orders = $orders->limit($limit)->get();
+        } else {
+            $orders = $orders->paginate($perPage);
+        }
+        // $orders = $limit ? $query->limit($limit)->orderBy('confirmed_at', 'desc')->get() : $query->orderBy('confirmed_at', 'desc')->paginate($perPage);
 
         if (!empty($orders)) {
             return response()->json([

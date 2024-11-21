@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('med_appointments', function (Blueprint $table) {
-            $table->string('meet_link')->nullable()->after('medcard_id');
+            $table->longText('meet_link')->nullable()->after('medcard_id');
         });
     }
 

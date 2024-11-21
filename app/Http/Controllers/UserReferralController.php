@@ -78,7 +78,6 @@ class UserReferralController extends Controller
             'user_id' => $request->user_id,
             'referral_code' => $this->generateCode(),
             'encoded_data' => $encodedData,
-            'decoded_data' => json_encode($decodedData),
             'expired_at' => now()->addYear(),
         ]);
 

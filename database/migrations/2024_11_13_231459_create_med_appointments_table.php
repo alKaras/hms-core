@@ -16,9 +16,9 @@ return new class extends Migration {
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('time_slot_id');
             $table->unsignedBigInteger('referral_id')->nullable();
-            $table->text('summary')->nullable();
-            $table->text('notes')->nullable();
-            $table->text('recommendations')->nullable();
+            $table->longText('summary')->nullable();
+            $table->longText('notes')->nullable();
+            $table->longText('recommendations')->nullable();
             $table->string('status')->default('created');
             $table->timestamps();
 

@@ -31,6 +31,22 @@ class MedCard extends Model
         'status'
     ];
 
+    protected $casts = [
+        'firstname' => 'encrypted',
+        'lastname' => 'encrypted',
+        'date_birthday' => 'encrypted',
+        'contact_number' => 'encrypted',
+        'emergency_contact_name' => 'encrypted',
+        'emergency_contact_phone' => 'encrypted',
+        'allergies' => 'encrypted',
+        'chronic_conditions' => 'encrypted',
+        'insurance_details' => 'encrypted',
+        'address' => 'encrypted',
+        'blood_type' => 'encrypted',
+        'current_medications' => 'encrypted',
+        'additional_notes' => 'encrypted',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

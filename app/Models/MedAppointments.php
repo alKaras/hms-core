@@ -28,6 +28,10 @@ class MedAppointments extends Model
 
     protected $casts = [
         'status' => AppointmentsStatusEnum::class,
+        'summary' => 'encrypted',
+        'notes' => 'encrypted',
+        'recommendations' => 'encrypted',
+        'meet_link' => 'encrypted'
     ];
 
     public function doctor()
