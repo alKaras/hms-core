@@ -24,21 +24,20 @@ class JwtMiddleware
         try {
             $user = JWTAuth::parseToken()->authenticate();
             Auth::setUser($user);
-        }
-        catch (TokenExpiredException $e) {
+        } catch (TokenExpiredException $e) {
 
             return response()->json([
                 'error' => 'Token Expired!',
-                'statusCode' => (int)401
+                'statusCode' => (int) 401
             ], 401);
 
         } catch (TokenInvalidException $e) {
             return response()->json([
                 'error' => 'Not Authorized!',
-                'statusCode' => (int)401
+                'statusCode' => (int) 401
             ], 401);
 
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return response()->json(['error' => 'Authorization Token not found'], 401);
         }
 

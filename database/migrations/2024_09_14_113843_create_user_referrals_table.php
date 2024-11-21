@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('user_id');
             $table->string('referral_code');
             $table->longText('encoded_data');
-            $table->json('decoded_data');
+            // $table->json('decoded_data'); used for testing what services in encoded_data
             $table->timestamp('expired_at');
             $table->timestamps();
 

@@ -15,18 +15,18 @@ return new class extends Migration {
             $table->unsignedBigInteger('user_id');
             $table->string('firstname');
             $table->string('lastname');
-            $table->date('date_birthday')->nullable();
+            $table->text('date_birthday')->nullable();
             $table->enum('gender', ['male', 'female', 'non-binary'])->nullable();
             $table->string('contact_number')->nullable();
-            $table->string('address')->nullable();
+            $table->longText('address')->nullable();
             $table->string('blood_type')->nullable();
-            $table->text('allergies')->nullable();
-            $table->text('chronic_conditions')->nullable();
-            $table->text('current_medications')->nullable();
+            $table->longText('allergies')->nullable();
+            $table->longText('chronic_conditions')->nullable();
+            $table->longText('current_medications')->nullable();
             $table->string('emergency_contact_name')->nullable();
             $table->string('emergency_contact_phone')->nullable();
-            $table->text('insurance_details')->nullable();
-            $table->text('additional_notes')->nullable();
+            $table->longText('insurance_details')->nullable();
+            $table->longText('additional_notes')->nullable();
             $table->enum('status', ['active', 'inactive', 'archived'])->default('active');
             $table->timestamps();
 

@@ -46,7 +46,7 @@ class MedAppointmentResource extends JsonResource
                 'id' => $this->referral->id,
                 'code' => $this->referral->referral_code,
                 'expired_at' => $this->referral->expired_at,
-                'data' => json_decode($this->referral->decoded_data),
+                'data' => json_decode(base64_decode($this->referral->encoded_data), true),
             ] : null,
             'hospital' => $this->doctor && $this->doctor->user && $this->doctor->user->hospital ? [
                 'id' => $this->doctor->user->hospital_id,

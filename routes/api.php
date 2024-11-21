@@ -43,16 +43,22 @@ require __DIR__ . '/medcard.php';
 
 
 Route::post('/webhook', [OrderController::class, 'stripeHookHandler']);
-Route::post('/checkout/cancel', [OrderController::class, 'cancel']);
-Route::post('/order/get', [FeedController::class, 'getOrderByFilter']);
-Route::post('/report/get', [FeedController::class, 'getReportByFilter']);
-Route::post('/report/render', [FeedController::class, 'downloadReport']);
-Route::post('/order/sendconfirmation', [OrderController::class, 'sendOrderConfirmationMail']);
+Route::post('/checkout/cancel', [OrderController::class, 'cancel'])->middleware(['jwt.auth', 'role:admin,manager,user']);
+
+Route::post('/order/feed/get', [FeedController::class, 'getOrderByFilter'])->middleware(['jwt.auth']);
+
+
+Route::middleware(['jwt.auth', 'role:admin,manager,doctor'])->group(function () {
+    Route::post('/order/sendconfirmation', [OrderController::class, 'sendOrderConfirmationMail']);
+    Route::post('/report/get', [FeedController::class, 'getReportByFilter']);
+    Route::post('/report/render', [FeedController::class, 'downloadReport']);
+});
+
 
 /**
  * Roles routes api/roles
  */
-Route::prefix('roles')->group(function () {
+Route::prefix('roles')->middleware(['jwt.auth', 'role:admin'])->group(function () {
     Route::get('/search', [RoleController::class, 'search']);
 });
 

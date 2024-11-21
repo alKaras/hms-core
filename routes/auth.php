@@ -12,7 +12,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/email-verify', [AuthController::class, 'verifyUserEmail']);
-    Route::post('/email-resend-verification', [AuthController::class, 'resendEmailVerification']);
+    Route::post('/email-resend-verification', [AuthController::class, 'resendEmailVerification'])->middleware(['jwt.auth']);
 });
 
 Route::middleware(['jwt.auth'])->group(function () {
@@ -20,13 +20,13 @@ Route::middleware(['jwt.auth'])->group(function () {
 
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/user/me', [UserController::class, 'getMe']);
-    Route::get('/userreferral/fetch', [UserReferralController::class, 'index']);
+
 });
 
 /**
  * ShoppingCart routes
  */
-Route::middleware(['jwt.auth', 'cart.expiration', 'order.expiration'])->group(function () {
+Route::middleware(['jwt.auth', 'cart.expiration', 'order.expiration', 'role:user'])->group(function () {
     Route::post('/shoppingcart/item/add', [CartController::class, 'addToCart']);
     Route::get('/shoppingcart/items/get', [CartController::class, 'getCart']);
     Route::delete('/shoppingcart/item/{itemId}/remove', [CartController::class, 'removeItem']);
