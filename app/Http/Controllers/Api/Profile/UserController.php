@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api\Profile;
 
+use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\MedCard;
 use App\Models\User\User;
-use App\Notifications\RegisteredUserCredentials;
 use Illuminate\Http\Request;
 use App\Models\User\UserRole;
 use App\Models\Hospital\Hospital;
@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
+use App\Notifications\RegisteredUserCredentials;
 
 class UserController extends Controller
 {
@@ -104,8 +105,11 @@ class UserController extends Controller
                     ->letters()
                     ->numbers()
                     ->symbols()
-            ]
+            ],
+            'hospital_id' => ['exists:hospital,id', 'nullable'],
         ]);
+
+        $isManager = $request->input('isManager', false);
 
         if ($validator->fails()) {
             return response()->json([
@@ -119,26 +123,43 @@ class UserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
+            'hospital_id' => $isManager ? $request->hospital_id : null,
+            'email_verified_at' => $isManager ? Carbon::now() : null,
         ]);
 
-        $roleId = Role::where('title', 'user')->value('id');
+        $userRole = Role::where('title', 'user')->value('id');
 
         if ($user) {
-            DB::table('user_roles')->insert([
-                'user_id' => $user->id,
-                'role_id' => $roleId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if ($isManager) {
+                $managerRole = Role::where('title', 'manager')->value('id');
 
+                $user->roles()->attach($userRole, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $user->roles()->attach($managerRole, [
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } else {
+                DB::table('user_roles')->insert([
+                    'user_id' => $user->id,
+                    'role_id' => $userRole,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
             $user->notify(new RegisteredUserCredentials($user->email, $request->password));
 
             return new UserResource($user);
+
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while trying to create user'
+            ], 500);
         }
-        return response()->json([
-            'status' => 'error',
-            'message' => 'An error occurred while trying to create user'
-        ], 500);
     }
 
 
