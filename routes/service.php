@@ -15,4 +15,5 @@ Route::prefix('services')->group(function () {
     Route::delete('/delete/{id}', [HServicesController::class, 'destroy'])->middleware(['jwt.auth', 'role:admin,manager']);
 
     Route::post('/doctors/attach', [HServicesController::class, 'attachDoctors'])->middleware(['jwt.auth', 'role:admin,manager']);
+    // Route::post('/doctors/detach', [HServicesController::class, 'detachDoctors'])->middleware(['jwt.auth', 'role:admin,manager']);
 });

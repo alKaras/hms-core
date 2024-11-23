@@ -218,6 +218,48 @@ class HServicesController extends Controller
     }
 
     /**
+     * Detached existed service doctors
+     * @param \Illuminate\Http\Request $request
+     * @return mixed|\Illuminate\Http\JsonResponse
+     */
+    public function detachDoctors(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'service_id' => ['required', 'exists:services,id'],
+            'doctors' => ['required', 'array'],
+            'doctors.*' => ['required', 'numeric']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data is incorrect',
+                'error' => $validator->errors()
+            ], 422);
+        }
+
+        $serviceId = $request->input('service_id');
+        $doctorIds = $request->input('doctors');
+
+        $deleted = DB::table('doctor_services')
+            ->whereIn('doctor_id', $doctorIds)
+            ->where('service_id', $serviceId)
+            ->delete();
+
+        if ($deleted) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => "Doctors detached from the service {$serviceId} successfully",
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Something went wrong',
+            ], 500);
+        }
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy($id)

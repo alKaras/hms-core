@@ -63,18 +63,32 @@ class DoctorController extends Controller
                 ->where('u.hospital_id', '=', (int) $hospitalId)
                 ->where('s.id', '=', $serviceId)->get();
 
+            $attachedDoctors = Doctor::whereHas('services', function ($query) use ($serviceId) {
+                $query->where('service_id', $serviceId);
+            })
+                ->whereHas('user', function ($query) use ($hospitalId) {
+                    $query->where('hospital_id', $hospitalId);
+                })
+                ->with('user')
+                ->pluck('id');
+
+            // $filteredDoctors = $doctors->filter(function ($doctor) use ($attachedDoctors) {
+            //     return !in_array($doctor->doctor_id, $attachedDoctors->toArray()) && $doctor->hidden === 0;
+            // });
+
+
+
             return response()->json([
                 'status' => 'ok',
-                'data' => $doctors->filter(function ($doctor) {
-                    return $doctor->hidden === 0;
-                })
-                    ->map(function ($doctor) {
+                'data' => $doctors
+                    ->map(function ($doctor) use ($attachedDoctors) {
                         return [
                             'doctorId' => $doctor->doctor_id,
                             'name' => $doctor->name,
                             'surname' => $doctor->surname,
                             'email' => $doctor->email,
                             'specialization' => $doctor->specialization,
+                            'linkedToCurrentService' => in_array($doctor->doctor_id, $attachedDoctors->toArray()),
                         ];
                     })
             ]);
