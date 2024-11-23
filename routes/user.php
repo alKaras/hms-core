@@ -12,7 +12,7 @@ Route::prefix('user')->group(function () {
 
     Route::post('create', [UserController::class, 'store'])->middleware(['jwt.auth', 'role:admin,manager']);
 
-    Route::get('fetch/{id}', [UserController::class, 'show'])->middleware(['jwt.auth', 'role:admin,manager']);
+    Route::get('fetch/{id}', [UserController::class, 'show'])->middleware(['jwt.auth', 'role:admin']);
 
     Route::put('edit/{id}', [UserController::class, 'update'])->middleware(['jwt.auth', 'role:user,admin']);
 
