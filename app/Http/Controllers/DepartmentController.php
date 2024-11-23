@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Hospital\HospitalDepartments;
 use Exception;
 use Illuminate\Http\Request;
 use App\Imports\DepartmentImport;
@@ -12,6 +11,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Department\Department;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\DepartmentResource;
+use App\Models\Hospital\HospitalDepartments;
+use Illuminate\Validation\ValidationException;
 
 class DepartmentController extends Controller
 {
@@ -136,6 +137,12 @@ class DepartmentController extends Controller
                 'status' => 'error',
                 'message' => 'Failed to import departments',
                 'error' => $e->getMessage(),
+            ], 500);
+        } catch (ValidationException $ve) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to import departments',
+                'error' => $ve->getMessage(),
             ], 500);
         }
 

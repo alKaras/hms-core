@@ -13,34 +13,41 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class DepartmentImport implements ToModel, WithHeadingRow
 {
-    /**
-     * @param array $row
-     */
     public function model(array $row)
     {
-        $existedDepartment = Department::where("alias", $row['alias'])->first();
-
-        $hospital = Hospital::find($row['hospital_id']);
-
-        if (!$hospital) {
-            throw ValidationException::withMessages([
-                'status' => 'error',
-                'message' => "An error occurred importing department: Hospital does not exist"
-            ]);
+        //Skip when row is null
+        if (empty(array_filter($row))) {
+            \Log::info('Skipping empty row:', $row);
+            return null;
         }
 
+        $hospital = Hospital::whereHas('content', function ($query) use ($row) {
+            $query->where('title', trim($row['hospital_title']));
+        })->first();
 
-        if ($existedDepartment) {
-            if (!$existedDepartment->hospitals->contains($hospital->id)) {
-                DB::table('hospital_departments')->insert([
-                    'department_id' => $existedDepartment->id,
-                    'hospital_id' => $hospital->id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now()
+
+        if (!$hospital) {
+            throw new \Exception('Hospital not found: ' . $row['hospital_title']);
+        }
+
+        $existingDepartment = Department::whereHas("content", function ($query) use ($row) {
+            $query->where('title', trim($row['title']));
+        })->first();
+
+
+        if ($existingDepartment) {
+            $departmentRelationExists = $existingDepartment->hospitals()
+                ->where('hospital_id', $hospital->id)
+                ->exists();
+
+            if (!$departmentRelationExists) {
+                $existingDepartment->hospitals()->attach($hospital->id, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
 
-            return $existedDepartment;
+            return $existingDepartment;
         }
 
         $department = Department::create([
@@ -58,7 +65,7 @@ class DepartmentImport implements ToModel, WithHeadingRow
                 'updated_at' => now(),
             ]);
 
-            $department->hospitals()->attach($hospital, [
+            $department->hospitals()->attach($hospital->id, [
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

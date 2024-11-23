@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User\User;
 use Illuminate\Support\Str;
 use App\Models\Doctor\Doctor;
+use App\Models\Hospital\Hospital;
 use App\Models\Department\Department;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -19,47 +20,83 @@ class DoctorImport implements ToModel, WithHeadingRow
      */
     public function model(array $row)
     {
+        //Skip when row is null
+        if (empty(array_filter($row))) {
+            \Log::info('Skipping empty row:', $row);
+            return null;
+        }
+
         $password = Str::password($length = 12, $letters = true, $numbers = true, $symbols = true);
 
-        $user = User::where("email", $row["email"])->first();
-        if (!$user) {
-            $user = User::create([
+        $hospital = Hospital::whereHas('content', function ($query) use ($row) {
+            $query->where('title', trim($row['hospital_title']));
+        })->first();
+
+        if (!$hospital) {
+            throw new \Exception('Hospital not found: ' . $row['hospital_title']);
+        }
+
+        $user = User::where("email", trim($row["email"]))->first();
+
+        if ($user === null) {
+            $newUser = User::create([
                 'email' => $row['email'],
                 'name' => $row['name'],
                 'surname' => $row['surname'],
                 'phone' => $row['phone'],
                 'password' => bcrypt($password),
-                'email_verified_at' => Carbon::now(),
+                'email_verified_at' => now(),
             ]);
 
             $userRole = Role::where('title', 'user')->value('id');
             $doctorRole = Role::where('title', 'doctor')->value('id');
 
-            if ($user) {
-                $user->roles()->attach($userRole, [
+            if ($newUser) {
+                $newUser->roles()->attach($userRole, [
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-                $user->roles()->attach($doctorRole, [
+                $newUser->roles()->attach($doctorRole, [
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
+
+            $doctor = Doctor::create([
+                'user_id' => $newUser->id,
+                'specialization' => $row['specialization']
+            ]);
+
+            $newUser->update([
+                'hospital_id' => $hospital->id
+            ]);
+
+            if (!empty($row['departments'])) {
+                $departmentTitles = array_map('trim', explode(',', $row['departments']));
+
+                $departments = Department::whereHas('content', function ($query) use ($departmentTitles) {
+                    $query->whereIn('title', $departmentTitles);
+                })->get();
+
+                if ($departments->isNotEmpty()) {
+                    $doctor->departments()->attach($departments, [
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+            $newUser->notify(new DoctorCredentialsNotification($newUser->email, $password));
+            return $doctor;
         }
 
         $existedDoctor = Doctor::where('user_id', $user->id)->first();
         if ($existedDoctor) {
-            return response()->json([
-                'status' => 'error',
-                'message' => "The doctor for this user id {$user->id} has already been created"
-            ], 500);
+            throw new \Exception("The doctor for this user id {$user->id} has already been created");
         }
 
-        if ($user->hospital_id !== $row['hospital_id']) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'The user has already been linked to another hospital'
-            ], 500);
+
+        if ((int) $user->hospital_id !== (int) $hospital->id) {
+            throw new \Exception("The user {$user->email} has already been linked to another hospital");
         }
 
         $doctor = Doctor::create([
@@ -68,7 +105,7 @@ class DoctorImport implements ToModel, WithHeadingRow
         ]);
 
         $user->update([
-            'hospital_id' => $row['hospital_id']
+            'hospital_id' => $hospital->id
         ]);
 
         if (!empty($row['departments'])) {

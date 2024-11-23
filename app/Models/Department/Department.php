@@ -17,7 +17,7 @@ class Department extends Model
     protected $fillable = [
         'alias',
         'email',
-        'phone'
+        'phone',
     ];
 
     public function content()

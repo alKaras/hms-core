@@ -20,6 +20,11 @@ class ServicesImport implements ToModel, WithHeadingRow
      */
     public function model(array $row)
     {
+        //Skip when row is null
+        if (empty(array_filter($row))) {
+            \Log::info('Skipping empty row:', $row);
+            return null;
+        }
 
         $hospital = Hospital::whereHas('content', function ($query) use ($row) {
             $query->where('title', trim($row['hospital_title']));
@@ -47,9 +52,20 @@ class ServicesImport implements ToModel, WithHeadingRow
             throw new Exception('Error occurred while finding hospital doctor or department');
         }
 
-        $existedHospitalService = HServices::where('name', $row['name'])->first();
+        // $existedHospitalService = HServices::where('name', $row['name'])->first();
+        $existedHospitalService = HServices::with('hospitals')->where('name', $row['name'])->first();
+        $excludeHospitalId = $hospital->id;
+        $excludeDoctorId = $doctor->id;
 
         if ($existedHospitalService) {
+
+            $existingHospitalRelation = $existedHospitalService->hospitals()->where('hospital_id', $excludeHospitalId)->exists();
+            $existingDoctorRelation = $existedHospitalService->doctors()->where('doctor_id', $excludeDoctorId)->exists();
+
+            if ($existingHospitalRelation || $existingDoctorRelation) {
+                // If the hospital or doctor is already linked, throw an exception
+                throw new \Exception("This service is already linked to the provided hospital or doctor.");
+            }
 
             $existedHospitalService->hospitals()->attach($hospital->id, [
                 'created_at' => now(),
@@ -60,7 +76,6 @@ class ServicesImport implements ToModel, WithHeadingRow
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
 
         } else {
             $newService = HServices::create([
