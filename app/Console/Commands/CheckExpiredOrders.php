@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\OrderStatusEnum;
 use App\Enums\TimeslotStateEnum;
 use Carbon\Carbon;
 use App\Models\TimeSlots;
@@ -30,35 +31,41 @@ class CheckExpiredOrders extends Command
      */
     public function handle()
     {
-        $expiredOrders = Order::where('status', '=', 1)
+        $expiredOrders = Order::where('status', '=', OrderStatusEnum::PENDING)
             ->where('confirmed_at', '=', null)
-            ->where('reserve_exp', '<', now()->subMinutes(10))
+            ->where('reserve_exp', '<=', now()->subMinutes(10))
             ->get();
 
-        foreach ($expiredOrders as $order) {
-            event(new OrderExpired($order));
+        if (!empty($expiredOrders)){
+            foreach ($expiredOrders as $order) {
+                event(new OrderExpired($order));
 
-            $order->update([
-                'cancelled_at' => now(),
-                'status' => 3,
-                'cancel_reason' => 'Order Expired',
-            ]);
+                $order->update([
+                    'cancelled_at' => now(),
+                    'status' => OrderStatusEnum::CANCELED,
+                    'cancel_reason' => 'Order Expired',
+                ]);
 
-            foreach ($order->orderServices as $service) {
-                $timeSlot = TimeSlots::find($service->time_slot_id);
+                foreach ($order->orderServices as $service) {
+                    $timeSlot = TimeSlots::find($service->time_slot_id);
 
-                if ($timeSlot) {
-                    $timeSlot->state = TimeslotStateEnum::FREE;
-                    $timeSlot->save();
+                    if ($timeSlot) {
+                        $timeSlot->state = TimeslotStateEnum::FREE;
+                        $timeSlot->save();
+                    }
                 }
-            }
 
-            $order->orderServices()->update([
-                'is_canceled' => 1,
-                'updated_at' => now(),
-            ]);
+                $order->orderServices()->update([
+                    'is_canceled' => 1,
+                    'updated_at' => now(),
+                ]);
+            }
+            $this->info('Checked for expired orders and updated their status.');
+        } else {
+            $this->info('There are no expired orders');
         }
 
-        $this->info('Checked for expired orders and updated their status.');
+
+
     }
 }

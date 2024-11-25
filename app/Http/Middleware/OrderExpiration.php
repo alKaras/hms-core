@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\OrderStatusEnum;
 use App\Enums\TimeslotStateEnum;
 use Closure;
 use Carbon\Carbon;
@@ -22,12 +23,12 @@ class OrderExpiration
         $user = auth()->user();
 
         $order = Order::where('user_id', value: $user->id)
-            ->where('status', value: 1)->first();
+            ->where('status', value: OrderStatusEnum::PENDING)->first();
 
-        if ($order && $order->confirmed_at == null && $order->status === 1 && $order->reserve_exp < Carbon::now()) {
+        if ($order && $order->confirmed_at == null && $order->reserve_exp < Carbon::now()) {
             $order->update([
                 'cancelled_at' => Carbon::now(),
-                'status' => 3,
+                'status' => OrderStatusEnum::CANCELED,
                 'cancel_reason' => 'Order Expired',
             ]);
 

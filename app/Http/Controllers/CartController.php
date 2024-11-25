@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MedCard;
-use Carbon\Carbon;
+use App\Enums\TimeslotStateEnum;
 use App\Models\Cart\Cart;
+use App\Models\Cart\CartItems;
+use App\Models\Hospital\Hospital;
+use App\Models\MedCard;
 use App\Models\TimeSlots;
 use App\Models\User\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\Cart\CartItems;
-use App\Enums\TimeslotStateEnum;
-use App\Models\Hospital\Hospital;
-use Illuminate\Support\Facades\Validator;
-use App\Customs\Services\OrderProcessingService;
 
 class CartController extends Controller
 {

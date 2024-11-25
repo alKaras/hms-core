@@ -1,31 +1,30 @@
 <?php
 
-namespace App\Customs\Services\Feeds;
+namespace App\Customs\Services\Feeds\Report;
 
-use App\Models\Hospital\Hospital;
-use Illuminate\Support\Facades\DB;
 use App\Customs\Services\CriteriaCondition\CriteriaConditionService;
+use App\Enums\OrderStatusEnum;
+use Illuminate\Support\Facades\DB;
 
-class ReportFeedService
+class ReportQueryService
 {
-
-    public function __construct(public CriteriaConditionService $criteriaConditionService)
+    public function __construct(
+        private CriteriaConditionService $criteriaConditionService
+    )
     {
     }
 
-    public function getReportByHospital($hospitalId, $perPage, $page, $criteriaConditions = [])
+    public function findGeneralHospitalReport($hospitalId, $criteriaConditions = [])
     {
-        $hospital = Hospital::find($hospitalId);
-
-        $generalQuery = DB::table('orders as o')
+        return DB::table('orders as o')
             ->leftJoin('order_services as os', 'o.id', '=', 'os.order_id')
             ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
             ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
             // ->leftJoin('hospital_services as hs', 'hs.service_id', '=', 's.id')
             ->leftJoin('hospital as h', 'h.id', '=', 'o.hospital_id')
             ->leftJoin('hospital_content as hc', 'hc.hospital_id', '=', 'h.id')
-            ->where('o.status', '=', 2)
-            ->where('o.hospital_id', '=', $hospital->id)
+            ->where('o.status', '=', OrderStatusEnum::SOLD)
+            ->where('o.hospital_id', '=', $hospitalId)
             ->when($criteriaConditions, function ($query) use ($criteriaConditions) {
                 return $this->criteriaConditionService->applyConditions($query, $criteriaConditions);
             })
@@ -39,15 +38,17 @@ class ReportFeedService
                 COUNT(os.id) / NULLIF(COUNT(DISTINCT DATE(o.confirmed_at)), 0) as `averageServicesPerDay`
             ")
             ->get();
+    }
 
-
-        $hospitalServicesQuery = DB::table('orders as o')
+    public function findDetailedHospitalReport($hospitalId, $perPage, $page, $criteriaConditions = [])
+    {
+        return DB::table('orders as o')
             ->leftJoin('order_services as os', 'o.id', '=', 'os.order_id')
             ->leftJoin('time_slots as ts', 'ts.id', '=', 'os.time_slot_id')
             ->leftJoin('services as s', 's.id', '=', 'ts.service_id')
             ->leftJoin('hospital as h', 'h.id', '=', 'o.hospital_id')
-            ->where('o.status', '=', 2)
-            ->where('o.hospital_id', '=', $hospital->id)
+            ->where('o.status', '=', OrderStatusEnum::SOLD)
+            ->where('o.hospital_id', '=', $hospitalId)
             ->when($criteriaConditions, function ($query) use ($criteriaConditions) {
                 return $this->criteriaConditionService->applyConditions($query, $criteriaConditions);
             })
@@ -59,21 +60,5 @@ class ReportFeedService
                 SUM(os.price) as `serviceTotalSum`
             ")
             ->paginate($perPage, ["*"], "page", $page);
-
-        $hospitalServicesQuery->getCollection()->transform(function ($single) {
-            return [
-                'serviceId' => $single->serviceId,
-                'serviceName' => $single->serviceName,
-                'quantity' => $single->serviceQuantity,
-                'serviceTotalSum' => $single->serviceTotalSum,
-            ];
-        });
-
-        return response()->json([
-            'status' => 'ok',
-            'general' => $generalQuery,
-            'detailed' => $hospitalServicesQuery->items(),
-        ]);
-
     }
 }

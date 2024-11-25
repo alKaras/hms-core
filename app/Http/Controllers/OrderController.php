@@ -2,34 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Customs\Services\OrderProcessingService;
-use App\Enums\OrderFiltersEnum;
-use App\Enums\TimeslotStateEnum;
-use App\Http\Resources\OrderResource;
-use App\Http\Resources\OrderServiceResource;
-use App\Models\Cart\Cart;
-use App\Models\Doctor\Doctor;
-use App\Models\Hospital\Hospital;
-use App\Models\Order\Order;
-use App\Models\Order\OrderPayment;
-use App\Models\Order\OrderPaymentLog;
-use App\Models\Order\OrderServices;
-use App\Models\TimeSlots;
-use App\Models\User\User;
-use App\Notifications\TimeSlotConfirmationNotification;
-use DB;
+use App\Customs\Services\OrderProcessing\OrderProcessingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Stripe\Stripe;
 
 class OrderController extends Controller
 {
 
     /**
      * OrderController construct
-     * @param \App\Customs\Services\OrderProcessingService $orderProcessingService
+     * @param \App\Customs\Services\OrderProcessing\OrderProcessingService $orderProcessingService
      */
-    public function __construct(public OrderProcessingService $orderProcessingService)
+    public function __construct(
+        private OrderProcessingService $orderProcessingService,
+    )
     {
     }
     /**

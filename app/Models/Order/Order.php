@@ -2,6 +2,7 @@
 
 namespace App\Models\Order;
 
+use App\Enums\OrderStatusEnum;
 use App\Models\User\User;
 use App\Models\Hospital\Hospital;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,10 @@ class Order extends Model
         'cancelled_at',
         'cancel_reason',
         'reserve_exp'
+    ];
+
+    protected $casts = [
+        'status' => OrderStatusEnum::class
     ];
 
     public function orderServices()
