@@ -34,11 +34,11 @@ class EmailVerificationNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Verify Email address')
-            ->line("Dear $notifiable->name")
-            ->line('Thank you for signing up in our Hospital Management System. To ensure the security please verify your email')
-            ->action('Verify Email', $this->url)
-            ->line('If you didn\'t create an account, no further action is required from you.')
+            ->subject('Підтвердження пошти')
+            ->line("Привіт, $notifiable->name")
+            ->line('Дякуємо за реєстрацію в нашій системі HMS. Для забезпечення безпеки, будь ласка, підтвердіть свою електронну пошту')
+            ->action('Підтвердити', $this->url)
+            ->line('Якщо ви не створили обліковий запис, ніяких подальших дій від вас не вимагається.')
             ->salutation('З повагою, команда HMS');
 
     }

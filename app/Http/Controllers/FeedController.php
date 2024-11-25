@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Exports\ReportExport;
+use App\Customs\Services\CriteriaCondition\CriteriaConditionService;
+use App\Customs\Services\Feeds\Order\OrderFeedService;
+use App\Customs\Services\Feeds\Report\ReportFeedService;
 use App\Enums\OrderFiltersEnum;
 use App\Enums\ReportFiltersEnum;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ReportExport;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Customs\Services\Feeds\OrderFeedService;
-use App\Customs\Services\Feeds\ReportFeedService;
-use App\Customs\Services\CriteriaCondition\CriteriaConditionService;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FeedController extends Controller
 {
@@ -20,8 +20,8 @@ class FeedController extends Controller
     /**
      * Feed Controller constructor
      * @param CriteriaConditionService $criteriaConditionService,
-     * @param OrderFeedService $orderFeedService,
-     * @param ReportFeedService $reportFeedService
+     * @param \App\Customs\Services\Feeds\Order\OrderFeedService $orderFeedService,
+     * @param \App\Customs\Services\Feeds\Report\ReportFeedService $reportFeedService
      */
     public function __construct(
         public CriteriaConditionService $criteriaConditionService,
