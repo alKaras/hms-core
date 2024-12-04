@@ -20,5 +20,5 @@ Route::prefix('/timeslots')->group(function () {
     // Route::put('/{id}/edit', [TimeSlotsController::class, 'update'])->middleware(['jwt.auth', 'role:admin,manager']);
     Route::delete('/{id}/destroy', [TimeSlotsController::class, 'destroy'])->middleware(['jwt.auth', 'role:admin,manager']);
 
-    Route::get('/{id}/download-timeslot', [TimeSlotsController::class, 'generatePdf'])->middleware(['jwt.auth', 'role:user']);
+    Route::get('/{id}/download-timeslot', [TimeSlotsController::class, 'generatePdf'])->middleware(['jwt.auth', 'role:user,admin,manager']);
 });
