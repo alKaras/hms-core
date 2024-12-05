@@ -10,8 +10,7 @@ class ReportQueryService
 {
     public function __construct(
         private CriteriaConditionService $criteriaConditionService
-    )
-    {
+    ) {
     }
 
     public function findGeneralHospitalReport($hospitalId, $criteriaConditions = [])
@@ -34,7 +33,7 @@ class ReportQueryService
                 hc.title as `hospitalTitle`,
                 hc.address as `hospitalAddress`,
                 COUNT(os.id) as `totalServiceQuantity`,
-                SUM(o.sum_subtotal) as `totalSum`,
+                SUM(os.price) as `totalSum`,
                 COUNT(os.id) / NULLIF(COUNT(DISTINCT DATE(o.confirmed_at)), 0) as `averageServicesPerDay`
             ")
             ->get();

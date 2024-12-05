@@ -181,7 +181,7 @@ class DoctorController extends Controller
             ], 500);
         }
 
-        if ($user->hospital_id !== $request->hospital_id) {
+        if ($user->hospital_id !== $request->hospital_id && $user->hospital_id != null) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'This user has already been linked to another hospital'

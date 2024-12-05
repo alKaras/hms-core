@@ -95,7 +95,7 @@ class DoctorImport implements ToModel, WithHeadingRow
         }
 
 
-        if ((int) $user->hospital_id !== (int) $hospital->id) {
+        if ((int) $user->hospital_id !== (int) $hospital->id && (int) $user->hospital_id !== null) {
             throw new \Exception("The user {$user->email} has already been linked to another hospital");
         }
 
