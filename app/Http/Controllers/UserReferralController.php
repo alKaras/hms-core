@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Customs\Services\NotificationService\NotificationService;
 use App\Http\Resources\UserReferralResource;
 use App\Models\HServices;
 use App\Models\User\User;
@@ -12,6 +13,11 @@ use Illuminate\Support\Facades\Validator;
 
 class UserReferralController extends Controller
 {
+
+    public function __construct(private NotificationService $notificationService)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -48,14 +54,15 @@ class UserReferralController extends Controller
                 'error' => $validator->errors(),
             ], 422);
         }
+        $user = User::find($request->user_id);
 
         $services = HServices::whereIn('id', $request->service_id)->get();
 
         $decodedData = [
             'user' => [
-                'id' => $request->user_id,
-                'name' => User::find($request->user_id)->name,
-                'surname' => User::find($request->user_id)->surname,
+                'id' => $user->id,
+                'name' => $user->name,
+                'surname' => $user->surname,
             ],
             'services' => $services->map(function ($service) {
                 return [
@@ -64,27 +71,19 @@ class UserReferralController extends Controller
                     'department' => $service->department->content->title,
                 ];
             })
-            // 'service_id' => $request->service_id,
-            // 'service_name' => HServices::find($request->service_id)->name,
-            // 'department' => [
-            //     'id' => $request->department_id,
-            //     'title' => Department::find($request->department_id)->content->title,
-            // ]
         ];
 
         $encodedData = base64_encode(json_encode($decodedData));
+        $referralCode = $this->generateCode();
 
         $userReferral = UserReferral::create([
-            'user_id' => $request->user_id,
-            'referral_code' => $this->generateCode(),
+            'user_id' => $user->id,
+            'referral_code' => $referralCode,
             'encoded_data' => $encodedData,
             'expired_at' => now()->addYear(),
         ]);
 
-        $user = User::find($request->user_id);
-
-        $user->notify(new UserReferralNotification($userReferral->referral_code));
-
+        $this->notificationService->sendReferral($user, $referralCode);
         return new UserReferralResource($userReferral);
     }
 

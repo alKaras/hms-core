@@ -3,14 +3,46 @@
 namespace App\Customs\Services\OrderProcessing;
 
 use App\Enums\OrderStatusEnum;
+use App\Enums\TimeslotStateEnum;
 use App\Models\Cart\Cart;
 use App\Models\Order\Order;
+use App\Models\User\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 class CartService
 {
+
+    public function make($user, $hospital)
+    {
+        return Cart::create([
+            "user_id" => $user->id,
+            'hospital_id' => $hospital->id,
+            "session_id" => session()->getId(),
+            "expired_at" => now()->addMinutes(15),
+        ]);
+    }
+
+    public function addItems($cart, $timeslot)
+    {
+        $cart->items()->create([
+            'time_slot_id' => $timeslot->id,
+            'price' => $timeslot->price,
+        ]);
+
+        $timeslot->state = TimeslotStateEnum::RESERVED;
+        $timeslot->save();
+
+        return response()->json(['message' => 'Item added to cart']);
+    }
+
     public function getUserCart($userId)
     {
         return Cart::where('user_id', $userId)->with('items')->first();
+    }
+
+    public function getExtendedUserCart($userId)
+    {
+        return Cart::where('user_id', $userId)->with('items.timeslot')->first();
     }
 
     public function createOrderFromCart(Cart $cart): Order

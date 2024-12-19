@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Customs\Services\MeetHandlerService;
+use App\Customs\Services\NotificationService\NotificationService;
 use App\Models\MedCard;
 use App\Models\TimeSlots;
 use App\Models\User\User;
@@ -17,7 +18,10 @@ use App\Http\Resources\MedAppointmentResource;
 class MedAppointmentsController extends Controller
 {
 
-    public function __construct(public MeetHandlerService $meetHandlerService)
+    public function __construct(
+        public MeetHandlerService $meetHandlerService,
+        private NotificationService $notificationService
+    )
     {
     }
     /**
@@ -273,9 +277,9 @@ class MedAppointmentsController extends Controller
         $appointmentSum = MedAppointments::find($request->input('appointmentId'));
 
         if ($appointmentSum && $appointmentSum->status == AppointmentsStatusEnum::COMPLETED) {
-            $user = User::find($appointmentSum->user_id);
-
-            $user->notify(new AppointmentSummaryNotification($appointmentSum));
+//            $user = User::find($appointmentSum->user_id);
+//            $user->notify(new AppointmentSummaryNotification($appointmentSum));
+            $this->notificationService->sendAppointmentSummary($appointmentSum);
 
             return response()->json([
                 'status' => 'ok',

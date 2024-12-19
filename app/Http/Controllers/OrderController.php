@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Customs\Services\OrderProcessing\OrderProcessingService;
 use Illuminate\Http\Request;
+use Stripe\Exception\ApiErrorException;
 
 class OrderController extends Controller
 {
@@ -17,10 +18,12 @@ class OrderController extends Controller
     )
     {
     }
+
     /**
      * Order checkout method
      * @param \Illuminate\Http\Request $request
      * @return mixed|\Illuminate\Http\JsonResponse
+     * @throws ApiErrorException
      */
     public function checkout(Request $request)
     {

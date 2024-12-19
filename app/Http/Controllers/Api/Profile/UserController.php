@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Profile;
 
+use App\Customs\Services\NotificationService\NotificationService;
 use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\MedCard;
@@ -19,6 +20,11 @@ use App\Notifications\RegisteredUserCredentials;
 
 class UserController extends Controller
 {
+
+    public function __construct(private NotificationService $notificationService)
+    {
+    }
+
     /**
      * Get logged in user method
      * @return mixed|\Illuminate\Http\JsonResponse
@@ -150,7 +156,8 @@ class UserController extends Controller
                     'updated_at' => now(),
                 ]);
             }
-            $user->notify(new RegisteredUserCredentials($user->email, $request->password));
+
+            $this->notificationService->sendCredentials($user, $request->password);
 
             return new UserResource($user);
 

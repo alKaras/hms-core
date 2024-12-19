@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Customs\Services\NotificationService\NotificationService;
 use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User\User;
@@ -15,8 +16,15 @@ use App\Notifications\DoctorCredentialsNotification;
 
 class DoctorImport implements ToModel, WithHeadingRow
 {
+
+    public function __construct(private NotificationService $notificationService)
+    {
+    }
+
     /**
      * @param array $row
+     * @return Doctor|null
+     * @throws \Exception
      */
     public function model(array $row)
     {
@@ -85,7 +93,8 @@ class DoctorImport implements ToModel, WithHeadingRow
                     ]);
                 }
             }
-            $newUser->notify(new DoctorCredentialsNotification($newUser->email, $password));
+            $this->notificationService->sendCredentials($newUser, $password, isDoctor: true);
+//            $newUser->notify(new DoctorCredentialsNotification($newUser->email, $password));
             return $doctor;
         }
 
@@ -122,7 +131,8 @@ class DoctorImport implements ToModel, WithHeadingRow
                 ]);
             }
         }
-        $user->notify(new DoctorCredentialsNotification($user->email, $password));
+        $this->notificationService->sendCredentials($user, $password, isDoctor: true);
+//        $user->notify(new DoctorCredentialsNotification($user->email, $password));
         return $doctor;
     }
 }

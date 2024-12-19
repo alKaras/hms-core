@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Customs\Services\OrderProcessing\CartService;
 use App\Enums\TimeslotStateEnum;
 use App\Models\Cart\Cart;
 use App\Models\Cart\CartItems;
@@ -14,6 +15,10 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
+
     public function addToCart(Request $request)
     {
         $user = auth()->user();
@@ -23,33 +28,21 @@ class CartController extends Controller
         $medcard = MedCard::where('user_id', $userRecord->id)->first();
 
         if ($userRecord && $userRecord->email_verified_at !== null && $hospital && $medcard) {
-            $cart = Cart::where("user_id", $user->id)->first();
+//            $cart = Cart::where("user_id", $user->id)->first();
+            $cart = $this->cartService->getUserCart($user->id);
 
             if (!$cart) {
-                $cart = Cart::create([
-                    "user_id" => $user->id,
-                    'hospital_id' => $hospital->id,
-                    "session_id" => session()->getId(),
-                    "expired_at" => now()->addMinutes(15),
-                ]);
-
                 $timeSlot = TimeSlots::find($request->time_slot_id);
+
                 if (!$timeSlot) {
                     return response()->json(['message' => 'No timeslot for provided id'], 404);
                 } elseif ($timeSlot->state === TimeslotStateEnum::RESERVED || $timeSlot->state === TimeslotStateEnum::SOLD) {
                     return response()->json(['message' => 'Cannot create shopping cart. TimeSlot is already reserved or sold'], 500);
                 }
 
+                $cart = $this->cartService->make($user, $hospital);
 
-                $cart->items()->create([
-                    'time_slot_id' => $timeSlot->id,
-                    'price' => $timeSlot->price,
-                ]);
-
-                $timeSlot->state = TimeslotStateEnum::RESERVED;
-                $timeSlot->save();
-
-                return response()->json(['message' => 'Item added to cart']);
+                return $this->cartService->addItems($cart, $timeSlot);
 
             } else {
                 if ($cart->hospital_id !== $hospital->id) {
@@ -72,15 +65,7 @@ class CartController extends Controller
                     return response()->json(['message' => 'Cannot create shopping cart. TimeSlot is already reserved or sold'], 500);
                 }
 
-                $cart->items()->create([
-                    'time_slot_id' => $timeSlot->id,
-                    'price' => $timeSlot->price,
-                ]);
-
-                $timeSlot->state = TimeslotStateEnum::RESERVED;
-                $timeSlot->save();
-
-                return response()->json(['message' => 'Item added to cart']);
+                return $this->cartService->addItems($cart, $timeSlot);
             }
         } else {
             return response()->json([
@@ -95,7 +80,9 @@ class CartController extends Controller
     public function getCart()
     {
         $user = auth()->user();
-        $cart = Cart::where('user_id', $user->id)->with('items.timeslot')->first();
+//        $cart = Cart::where('user_id', $user->id)->with('items.timeslot')->first();
+
+        $cart = $this->cartService->getExtendedUserCart($user->id);
 
         if (empty($cart)) {
             return response()->json(['message' => 'Cart is empty'], 404);
@@ -159,7 +146,7 @@ class CartController extends Controller
 
             if ($userRecord) {
                 $cart = Cart::where("user_id", $user->id)->first();
-
+//                $cart = $this->cartService->getUserCart($user->id);
                 if (!$cart) {
                     return response()->json(['message' => 'Cart is not found'], 404);
                 }
@@ -182,8 +169,9 @@ class CartController extends Controller
 
         }
 
-        $cart->items()->delete();
-        $cart->delete();
+        $this->cartService->clearCart($cart);
+//        $cart->items()->delete();
+//        $cart->delete();
 
         return response()->json([
             'status' => 'ok',

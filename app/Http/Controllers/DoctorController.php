@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Customs\Services\NotificationService\NotificationService;
 use Carbon\Carbon;
 use Validator;
 use App\Models\Role;
@@ -20,6 +21,11 @@ use App\Notifications\DoctorCredentialsNotification;
 
 class DoctorController extends Controller
 {
+
+    public function __construct(private NotificationService $notificationService)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -170,7 +176,7 @@ class DoctorController extends Controller
                     'updated_at' => now(),
                 ]);
             }
-            $user->notify(new DoctorCredentialsNotification($user->email, $password));
+            $this->notificationService->sendCredentials($user, $password, isDoctor: true);
         }
 
         $existedDoctor = Doctor::where('user_id', $user->id)->first();
@@ -241,7 +247,7 @@ class DoctorController extends Controller
         $file->storeAs('imports', $originalFileName);
 
         try {
-            Excel::import(new DoctorImport, $file);
+            Excel::import(new DoctorImport($this->notificationService), $file);
         } catch (\Exception $e) {
             \Log::error('Import failed', ['exception' => $e]);
             return response()->json([
